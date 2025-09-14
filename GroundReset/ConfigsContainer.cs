@@ -16,7 +16,7 @@ public class ConfigsContainer
         private set;
     } = null!;
     private static bool IsInitialized = false;
-    // private static DateTime LastConfigUpdateTime = DateTime.MinValue;
+    private static DateTime LastConfigUpdateTime = DateTime.MinValue;
 
     public static float TriggerIntervalInMinutes => Instance._triggerIntervalInMinutesConfig.Value;
     // public static float SavedTimeUpdateInterval => Instance._savedTimeUpdateIntervalConfig.Value;
@@ -73,14 +73,24 @@ public class ConfigsContainer
 
     private void UpdateConfiguration()
     {
-        if (Math.Abs(_lastTriggerIntervalInMinutes - TriggerIntervalInMinutes) > 1f && Helper.IsMainScene()) ResetTerrainTimer.RestartTimer();
+        if(DateTime.Now - LastConfigUpdateTime < TimeSpan.FromSeconds(1)) return;
+
+        var diff = Math.Abs(_lastTriggerIntervalInMinutes - TriggerIntervalInMinutes);
+        var isMainScene = Helper.IsMainScene();
+        
+        LogInfo($"diff={diff:F00}, isMainScene={isMainScene}");
+        
+        if (diff > 1f && isMainScene)
+        {
+            ResetTerrainTimer.RestartTimer();
+        }
         _lastTriggerIntervalInMinutes = TriggerIntervalInMinutes;
 
         ResetTerrainTimer.LoadTimePassedFromFile();
         ParsePaints(_paintsToIgnoreConfig.Value);
         
         if (ZNetScene.instance) InitWardsSettings.RegisterWards();
-        LogDebug($"PaintsToIgnore = {PaintsToIgnore.GetString()}");
+        LogInfo($"PaintsToIgnore = {PaintsToIgnore.GetString()}");
         
         LogInfo("Configuration Received");
     }

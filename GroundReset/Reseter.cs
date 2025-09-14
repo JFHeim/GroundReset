@@ -11,14 +11,20 @@ public static class Reseter
     public static List<WardSettings> wardsSettingsList = new();
     public static Stopwatch watch = new();
 
-    public static async void ResetAll(bool checkIfNeed = true,
-        bool checkWards = true, bool ranFromConsole = false)
+    public static async Task ResetAll(bool checkIfNeed = true, bool checkWards = true, bool ranFromConsole = false)
     {
-        await FindWards();
-        await Terrains.ResetTerrains(checkWards);
+        try
+        {
+            await FindWards();
+            await Terrains.ResetTerrains(checkWards);
 
-        if (ranFromConsole) Console.instance.AddString("<color=green> Done </color>");
-        wards.Clear();
+            if (ranFromConsole) Console.instance.AddString("<color=green> Done </color>");
+            wards.Clear();
+        }
+        catch (Exception e)
+        {
+            LogError($"ResetAll failed with exception: {e}");
+        }
     }
 
     private static async Task FindWards()
@@ -51,21 +57,17 @@ public static class Reseter
         y = FloorToInt((float)(vector3.z / (double)HeightmapScale + 0.5)) + HeightmapWidth / 2;
     }
     
-    public static bool IsInWard(Vector3 pos, float checkRadius = 0)
+    public static bool IsInWard(Vector3 pos, float checkRadius = 0) => wards.Exists(searchWard =>
     {
-        return wards.Exists(searchWard =>
-        {
-            var wardSettings =
-                wardsSettingsList.Find(s => s.prefabName.GetStableHashCode() == searchWard.GetPrefab());
-            var isEnabled = searchWard.GetBool(ZDOVars.s_enabled);
-            if (!isEnabled) return false; // not enabled, skip range check
-            var wardRadius = wardSettings.dynamicRadius
-                ? wardSettings.getDynamicRadius(searchWard)
-                : wardSettings.radius;
-            var inRange = pos.DistanceXZ(searchWard.GetPosition()) <= wardRadius + checkRadius;
-            return inRange;
-        }) || MarketplaceTerritorySystem.PointInTerritory(pos);
-    }
+        var wardSettings = wardsSettingsList.Find(s => s.prefabName.GetStableHashCode() == searchWard.GetPrefab());
+        var isEnabled = searchWard.GetBool(ZDOVars.s_enabled, true);
+        if (!isEnabled) return false; // not enabled, skip range check
+        var wardRadius = wardSettings.dynamicRadius
+            ? wardSettings.getDynamicRadius(searchWard)
+            : wardSettings.radius;
+        var inRange = pos.DistanceXZ(searchWard.GetPosition()) <= wardRadius + checkRadius;
+        return inRange;
+    }) || MarketplaceTerritorySystem.PointInTerritory(pos);
 
     public static bool IsInWard(Vector3 zoneCenter, int w, int h) { return IsInWard(HmapToWorld(zoneCenter, w, h)); }
 }

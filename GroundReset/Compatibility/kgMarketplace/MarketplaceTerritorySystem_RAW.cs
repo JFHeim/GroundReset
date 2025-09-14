@@ -2,6 +2,7 @@
 
 namespace GroundReset.Compatibility.kgMarketplace;
 
+// ReSharper disable once InconsistentNaming
 public static class MarketplaceTerritorySystem_RAW
 {
     public static bool PointInTerritory(Vector3 pos)

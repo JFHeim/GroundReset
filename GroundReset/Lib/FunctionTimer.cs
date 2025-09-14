@@ -111,11 +111,9 @@ public class FunctionTimer
 
     private void Update()
     {
-        if (useUnscaledDeltaTime)
-            Timer -= Time.unscaledDeltaTime;
-        else
-            Timer -= Time.deltaTime;
-
+        if (useUnscaledDeltaTime) Timer -= Time.unscaledDeltaTime;
+        else Timer -= Time.deltaTime;
+        
         if (Timer <= 0)
         {
             // Timer complete, trigger Action

@@ -9,36 +9,64 @@ public static class ResetTerrainTimer
 
     private static TimeSpan LastTimerTimePassed = TimeSpan.Zero;
 
-    private static readonly Action? _onTimer = () =>
+    private static readonly Action? _onTimer = async void () =>
     {
-        LogInfo("Timer Triggered, Resetting...");
-        Reseter.ResetAll();
-        RestartTimer();
+        try
+        {
+            LogInfo("Timer Triggered, starting chunks reset", insertTimestamp:true);
+            await Reseter.ResetAll();
+            LogInfo("Timer Triggered, chunks have been reset, restarting the timer", insertTimestamp:true);
+            RestartTimer();
+        }
+        catch (Exception exception1)
+        {
+            LogError($"OnTimer event failed with exception: {exception1}"); 
+            RestartTimer();
+        }
     };
-    
+
     public static void RestartTimer()
     {
-        LogDebug("ResetTerrainTimer.InitTimer");
-        if (Helper.IsMainScene() == false) return;
-        if (Helper.IsServer(true) == false) return;
+        try
+        {
+            LogInfo($"{nameof(ResetTerrainTimer)}.{nameof(RestartTimer)}");
+            if (Helper.IsMainScene() == false) return;
+            if (Helper.IsServer(true) == false) return;
 
-        LogDebug("Stopping existing timers");
-        FunctionTimer.StopAllTimersWithName(Consts.TimerId);
-        Timer = null;
-        
-        var timerInterval = TimeSpan.FromMinutes(ConfigsContainer.TriggerIntervalInMinutes);
-        if (LastTimerTimePassed != TimeSpan.Zero) timerInterval = LastTimerTimePassed;
-        
-        LogDebug($@"Creating new timer for {timerInterval:hh\:mm\:ss}");
-        
-        Timer = FunctionTimer.Create(
-            action: _onTimer, 
-            timer: (float)timerInterval.TotalSeconds, 
-            functionName: Consts.TimerId, 
-            useUnscaledDeltaTime: true,
-            stopAllWithSameName: true);
-        
-        LastTimerTimePassed = TimeSpan.Zero;
+            LogInfo("Stopping existing timers");
+            FunctionTimer.StopAllTimersWithName(Consts.TimerId);
+            Timer = null;
+            
+            var timerInterval = TimeSpan.FromMinutes(ConfigsContainer.TriggerIntervalInMinutes);
+            if (LastTimerTimePassed != TimeSpan.Zero)
+            {
+                try { timerInterval -= LastTimerTimePassed; }
+                catch { timerInterval = TimeSpan.FromSeconds(1);}
+
+                if(timerInterval.TotalSeconds <= 0) timerInterval = TimeSpan.FromSeconds(1);
+            }
+            
+            LogInfo($@"Creating new timer for {timerInterval:hh\:mm\:ss}", insertTimestamp:true);
+
+            try
+            {
+                Timer = FunctionTimer.Create(
+                    action: _onTimer, 
+                    timer: (float)timerInterval.TotalSeconds, 
+                    functionName: Consts.TimerId, 
+                    useUnscaledDeltaTime: true,
+                    stopAllWithSameName: true);
+            }
+            catch (Exception e)
+            {
+                LogError($"FunctionTimer.Create failed with exception: {e}");
+            }
+            LastTimerTimePassed = TimeSpan.Zero;
+        }
+        catch (Exception exception)
+        {
+            LogError($"{nameof(RestartTimer)} failed with exception: {exception}");
+        }
     }
 
     public static void LoadTimePassedFromFile()
@@ -62,7 +90,7 @@ public static class ResetTerrainTimer
         }
 
         LastTimerTimePassed = TimeSpan.FromSeconds(value);
-        LogDebug($@"Loaded last timer passed time: {LastTimerTimePassed:hh\:mm\:ss}");
+        LogInfo($@"Loaded last timer passed time: {LastTimerTimePassed:hh\:mm\:ss}");
     }
 
     public static void SavePassedTimerTimeToFile()
@@ -81,6 +109,6 @@ public static class ResetTerrainTimer
         LastTimerTimePassed = TimeSpan.FromSeconds(timerPassedTimeOnSeconds);
         File.WriteAllText(timerPassedTimeSaveFilePath, timerPassedTimeOnSeconds.ToString(NumberFormatInfo.InvariantInfo));
         
-        LogDebug($@"Saved timer passed time to file: {LastTimerTimePassed:hh\:mm\:ss}");
+        LogInfo($@"Saved timer passed time to file: {LastTimerTimePassed:hh\:mm\:ss}");
     }
 }

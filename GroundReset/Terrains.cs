@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Collections.Concurrent;
+using System.Text;
 
 // ReSharper disable PossibleLossOfFraction
 
@@ -6,26 +7,89 @@ namespace GroundReset;
 
 public static class Terrains
 {
-    public static async Task<int> ResetTerrains(bool checkWards)
+    public static async Task<int> ResetTerrains(bool checkWards, int? maxDegreeOfParallelism = null)
     {
         Reseter.watch.Restart();
         var zdos = await ZoneSystem.instance.GetWorldObjectsAsync(Consts.TerrCompPrefabName);
-        LogDebug($"Found {zdos.Count} chunks to reset");
-        var resets = 0;
+        
+        if (zdos.Count == 0)
+        {
+            LogInfo("0 chunks have been reset. Took 0.0 seconds");
+            Reseter.watch.Stop();
+            return 0;
+        }
+        
+        LogInfo($"Found {zdos.Count} chunks to reset", insertTimestamp:true);
+        
+        int dop = maxDegreeOfParallelism ?? Math.Max(1, Environment.ProcessorCount - 1);
+        var semaphore = new SemaphoreSlim(dop, dop);
+        var tasks = new List<Task>(zdos.Count);
+        
+        int completed = 0;
+        void ReportProgress()
+        {
+            var c = Interlocked.Increment(ref completed);
+            if ((c & 63) == 0) LogInfo($"Progress: {c}/{zdos.Count}");
+        }
+        
+        var results = new ConcurrentBag<(ZDO zdo, ChunkData data)>();
+
         foreach (var zdo in zdos)
         {
-            await ResetTerrainComp(zdo, checkWards);
-            resets++;
+            await semaphore.WaitAsync().ConfigureAwait(false);
+            var task = Task.Run(async () =>
+            {
+                try
+                {
+                    ChunkData? newChunkData = await ResetTerrainComp(zdo, checkWards).ConfigureAwait(false);
+                    if (newChunkData is not null)
+                    {
+                        results.Add((zdo, newChunkData));
+                        ReportProgress();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Лог ошибочного чанка, чтобы не ронять весь процесс
+                    LogWarning($"ResetTerrainComp failed for zdo {zdo.m_uid}: {ex}");
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            });
+
+            tasks.Add(task);
         }
 
-        var totalSeconds = TimeSpan.FromMilliseconds(Reseter.watch.ElapsedMilliseconds).TotalSeconds;
-        LogDebug($"{resets} chunks have been reset. Took {totalSeconds} seconds");
-        Reseter.watch.Restart();
+        await Task.WhenAll(tasks).ConfigureAwait(false);
+        LogInfo($"New data been generated for {completed} chunks. Applying each to game world...", insertTimestamp:true);
+        
+        int saved = 0;
+        foreach (var (zdo, data) in results)
+        {
+            try
+            {
+                SaveData(zdo, data);
+                saved++;
+            }
+            catch (Exception ex)
+            {
+                LogWarning($"SaveData failed for zdo {zdo.m_uid}: {ex}");
+            }
+        }
 
-        return resets;
+        foreach (var comp in TerrainComp.s_instances)
+            comp.m_hmap?.Poke(false);
+
+        var totalSeconds = TimeSpan.FromMilliseconds(Reseter.watch.ElapsedMilliseconds).TotalSeconds;
+        LogInfo($"{completed} chunks have been reset, {saved} saved. Took {totalSeconds} seconds", insertTimestamp:true);
+        Reseter.watch.Stop();
+
+        return completed;
     }
 
-    private static async Task ResetTerrainComp(ZDO zdo, bool checkWards)
+    private static async Task<ChunkData?> ResetTerrainComp(ZDO zdo, bool checkWards)
     {
         var divider                 = ConfigsContainer.Divider;
         var resetSmooth             = ConfigsContainer.ResetSmoothing;
@@ -33,7 +97,7 @@ public static class Terrains
         var minHeightToSteppedReset = ConfigsContainer.MinHeightToSteppedReset;
         var zoneCenter            = ZoneSystem.GetZonePos(ZoneSystem.GetZone(zdo.GetPosition()));
 
-        ChunkData data = null;
+        ChunkData? data;
         try
         {
             data = LoadOldData(zdo);
@@ -41,11 +105,10 @@ public static class Terrains
         catch (Exception e)
         {
             LogError(e);
-            LogError(debugSb.ToString());
-            return;
+            return null;
         }
 
-        if (data == null) return;
+        if (data == null) return null;
 
         var num = Reseter.HeightmapWidth + 1;
         for (var h = 0; h < num; h++)
@@ -67,16 +130,18 @@ public static class Terrains
             var flag_b = resetSmooth && data.m_smoothDelta[idx] != 0;
             data.m_modifiedHeight[idx] = data.m_levelDelta[idx] != 0 || flag_b;
         }
-
-
-        num = Reseter.HeightmapWidth;
+        
         var paintLenMun1 = data.m_modifiedPaint.Length - 1;
         for (var h = 0; h < num; h++)
         for (var w = 0; w < num; w++)
         {
             var idx = h * num + w;
             if (idx > paintLenMun1) continue;
-            if (!data.m_modifiedPaint[idx]) continue;
+            if (data.m_modifiedPaint[idx] == false) continue;
+            
+            var currentPaint = data.m_paintMask[idx];
+            if (IsPaintIgnored(currentPaint) != false) continue;
+            
             if (checkWards || ConfigsContainer.ResetPaintResetLastly)
             {
                 var worldPos = Reseter.HmapToWorld(zoneCenter, w, h);
@@ -84,24 +149,18 @@ public static class Terrains
                 if (ConfigsContainer.ResetPaintResetLastly)
                 {
                     Reseter.WorldToVertex(worldPos, zoneCenter, out var x, out var y);
-                    var heightIdx = y * (Reseter.HeightmapWidth + 1) + x;
+                    // var heightIdx = y * (Reseter.HeightmapWidth + 1) + x;
+                    var heightIdx = idx;
                     if (data.m_modifiedHeight.Length > heightIdx && data.m_modifiedHeight[heightIdx]) continue;
                 }
             }
 
-            var currentPaint = data.m_paintMask[idx];
-            // LogDebug($"currentPaint = {currentPaint}");
-            if (IsPaintIgnored(currentPaint)) continue;
-
+            
             data.m_modifiedPaint[idx] = false;
-            data.m_paintMask[idx] = Color.clear;
+            data.m_paintMask[idx] = Heightmap.m_paintMaskNothing;
         }
 
-        await SaveData(zdo, data);
-
-        ClutterSystem.instance?.ResetGrass(zoneCenter, Reseter.HeightmapWidth * Reseter.HeightmapScale / 2);
-
-        foreach (var comp in TerrainComp.s_instances) comp.m_hmap?.Poke(false);
+        return data;
     }
 
     private static bool IsPaintIgnored(Color color) =>
@@ -113,7 +172,7 @@ public static class Terrains
                 Abs(x.a - color.a) < ConfigsContainer.PaintsCompareTolerance
             );
 
-    private static async Task SaveData(ZDO zdo, ChunkData data)
+    private static void SaveData(ZDO zdo, ChunkData data)
     {
         var package = new ZPackage();
         package.Write(1);
@@ -146,14 +205,10 @@ public static class Terrains
 
         var bytes = Utils.Compress(package.GetArray());
         zdo.Set(ZDOVars.s_TCData, bytes);
-        await Task.Yield();
     }
 
-    private static readonly StringBuilder debugSb = new();
-
-    private static ChunkData LoadOldData(ZDO zdo)
+    private static ChunkData? LoadOldData(ZDO zdo)
     {
-        debugSb.Clear();
         var chunkData = new ChunkData();
         var byteArray = zdo.GetByteArray(ZDOVars.s_TCData);
         if (byteArray == null)
@@ -174,9 +229,6 @@ public static class Terrains
             return null;
         }
 
-        var msg = $"num1 = {num1}, modifiedHeight = {chunkData.m_modifiedHeight.Length}, levelDelta = {chunkData.m_levelDelta.Length}, smoothDelta = {chunkData.m_smoothDelta.Length}";
-        debugSb.AppendLine(msg);
-
         //ok
         for (var index = 0; index < num1; ++index)
         {
@@ -194,13 +246,12 @@ public static class Terrains
 
         var num2 = zPackage.ReadInt();
 
-        msg = $"num2 = {num2}, modifiedPaint = {chunkData.m_modifiedPaint.Length}, paintMask = {chunkData.m_paintMask.Length}";
-        debugSb.AppendLine(msg);
-
         if (num2 != chunkData.m_modifiedPaint.Length)
         {
-            LogWarning("Terrain data load error, paint array missmatch");
-            num2 = Min(num2, chunkData.m_modifiedPaint.Length, chunkData.m_paintMask.Length);
+            LogWarning($"Terrain data load error, paint array missmatch, num2={num2}, modifiedPaint.Length={chunkData.m_modifiedPaint.Length}, paintMask.Length={chunkData.m_paintMask.Length}");
+            num2 = Max(num2, chunkData.m_modifiedPaint.Length, chunkData.m_paintMask.Length);
+            if(chunkData.m_modifiedPaint.Length != num2) Array.Resize(ref chunkData.m_modifiedPaint, num2);
+            if(chunkData.m_paintMask.Length != num2)     Array.Resize(ref chunkData.m_paintMask, num2);
         }
 
         for (var index = 0; index < num2; ++index)
@@ -218,8 +269,6 @@ public static class Terrains
         }
 
         var flag_copyColor = num2 == Reseter.HeightmapWidth * Reseter.HeightmapWidth;
-        msg = $"flag_copyColor = {flag_copyColor}";
-        debugSb.AppendLine(msg);
 
         if (flag_copyColor)
         {
@@ -228,8 +277,6 @@ public static class Terrains
             var flagArray = new bool[chunkData.m_modifiedPaint.Length];
             chunkData.m_modifiedPaint.CopyTo(flagArray, 0);
             var num3 = Reseter.HeightmapWidth + 1;
-            msg = $"num3 = {num3}";
-            debugSb.AppendLine(msg);
             for (var index1 = 0; index1 < chunkData.m_paintMask.Length; ++index1)
             {
                 var num4 = index1 / num3;
@@ -244,6 +291,7 @@ public static class Terrains
             }
         }
 
+        // LogInfo(debugSb.ToString());
         return chunkData;
     }
 }

@@ -13,6 +13,15 @@
         <BepInExDir>$(GameDir)BepInEx/</BepInExDir>
         <BepInExLibsDir>$(GameDir)BepInEx/core/</BepInExLibsDir>
     </PropertyGroup>
+    
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+      <DebugType>embedded</DebugType>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+      <DebugType>none</DebugType>
+    </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.2" PrivateAssets="all"/>
@@ -69,6 +78,8 @@
 
     <Target Name="CopyDLL" AfterTargets="ILRepack">
         <Copy SourceFiles="$(TargetDir)$(ProjectName).dll" DestinationFolder="$(GameDir)BepInEx\plugins\"/>
+<!--        <Copy SourceFiles="$(TargetDir)$(ProjectName).pdb" DestinationFolder="$(GameDir)BepInEx\plugins\"/>-->
+        <Copy SourceFiles="$(TargetDir)$(ProjectName).dll.config" DestinationFolder="$(GameDir)BepInEx\plugins\"/>
     </Target>
 
     <ItemGroup>

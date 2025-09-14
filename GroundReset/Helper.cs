@@ -16,7 +16,7 @@ public static class Helper
         var gameState = GetGameServerClientState();
         if (logIsShouldBeOnServerOnly && gameState is GameServerClientState.Client)
             LogError($"{nameof(ModName)} is fully server-side, do not install it on clients");
-        return gameState is GameServerClientState.Client;
+        return gameState is GameServerClientState.Server;
     }
 
     public static GameServerClientState GetGameServerClientState() => ZNet.instance?.IsServer() switch

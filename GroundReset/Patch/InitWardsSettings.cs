@@ -21,13 +21,15 @@ public static class InitWardsSettings
 
         AddWard("guard_stone");
         AddWardThorward();
+        AddWardArcaneWard();
 
         if (ZNetScene.instance && ZNetScene.instance.m_prefabs != null && ZNetScene.instance.m_prefabs.Count > 0)
         {
             var foundWards = ZNetScene.instance.m_prefabs.Where(x => x.GetComponent<PrivateArea>()).ToList();
-            LogDebug($"Found {foundWards.Count} wards: {foundWards.GetString()}");
             foreach (var privateArea in foundWards) AddWard(privateArea.name);
         }
+        
+        LogInfo($"Found {Reseter.wardsSettingsList.Count} wards: {Reseter.wardsSettingsList.Select(x=>x.prefabName).ToArray().GetString()}");
     }
 
     private static void AddWard(string name)
@@ -36,7 +38,7 @@ public static class InitWardsSettings
         if (!prefab) return;
 
         var areaComponent = prefab.GetComponent<PrivateArea>();
-        if (Reseter.wardsSettingsList.Exists(x => x.prefabName == name)) return;
+        if (Reseter.wardsSettingsList.Any(x => x.prefabName == name)) return;
         Reseter.wardsSettingsList.Add(new WardSettings(name, areaComponent.m_radius));
     }
 
@@ -48,6 +50,17 @@ public static class InitWardsSettings
         {
             var radius = zdo.GetFloat(AzuWardZdoKeys.wardRadius);
             if (radius == 0) radius = WardIsLovePlugin.WardRange().Value;
+            return radius;
+        }));
+    }
+
+    private static void AddWardArcaneWard()
+    {
+        var prefab = ZNetScene.instance.GetPrefab(Consts.ArcaneWardPrefabName.GetStableHashCode());
+        if (!prefab) return;
+        Reseter.wardsSettingsList.Add(new WardSettings(Consts.ArcaneWardPrefabName, zdo =>
+        {
+            var radius = zdo.GetInt(Consts.ArcaneWardZdoKey);
             return radius;
         }));
     }
