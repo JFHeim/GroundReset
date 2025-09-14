@@ -1,0 +1,81 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net48</TargetFramework>
+        <LangVersion>preview</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+
+        <GameDir>/home/vych/.local/share/Steam/steamapps/common/Valheim dedicated server/</GameDir>
+        <ManagedAssemblesDir>$(GameDir)valheim_server_Data/Managed/</ManagedAssemblesDir>
+        <BepInExDir>$(GameDir)BepInEx/</BepInExDir>
+        <BepInExLibsDir>$(GameDir)BepInEx/core/</BepInExLibsDir>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.2" PrivateAssets="all"/>
+        <PackageReference Include="YamlDotNet" Version="16.3.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Reference Include="JFUtils">
+            <HintPath>Lib\JFUtils.dll</HintPath>
+        </Reference>
+        <Reference Include="kg.Marketplace">
+            <HintPath>Lib\kg.Marketplace.dll</HintPath>
+        </Reference>
+
+        <Reference Include="0Harmony">
+            <HintPath>$(BepInExLibsDir)0Harmony.dll</HintPath>
+        </Reference>
+        <Reference Include="BepInEx">
+            <HintPath>$(BepInExLibsDir)BepInEx.dll</HintPath>
+        </Reference>
+
+        <Reference Include="assembly_valheim" Publicize="true">
+            <HintPath>$(ManagedAssemblesDir)assembly_valheim.dll</HintPath>
+        </Reference>
+        <Reference Include="assembly_utils" Publicize="true">
+            <HintPath>$(ManagedAssemblesDir)assembly_utils.dll</HintPath>
+        </Reference>
+        <Reference Include="assembly_guiutils" Publicize="true">
+            <HintPath>$(ManagedAssemblesDir)assembly_guiutils.dll</HintPath>
+        </Reference>
+
+        <Reference Include="UnityEngine">
+            <HintPath>$(ManagedAssemblesDir)UnityEngine.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.CoreModule">
+            <HintPath>$(ManagedAssemblesDir)UnityEngine.CoreModule.dll</HintPath>
+        </Reference>
+        <Reference Include="Unity.TextMeshPro">
+            <HintPath>$(ManagedAssemblesDir)Unity.TextMeshPro.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.UI">
+            <HintPath>$(ManagedAssemblesDir)UnityEngine.UI.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.UIModule">
+            <HintPath>$(ManagedAssemblesDir)UnityEngine.UIModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.PhysicsModule">
+            <HintPath>$(ManagedAssemblesDir)UnityEngine.PhysicsModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.InputLegacyModule">
+            <HintPath>$(ManagedAssemblesDir)UnityEngine.InputLegacyModule.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
+    <Target Name="CopyDLL" AfterTargets="ILRepack">
+        <Copy SourceFiles="$(TargetDir)$(ProjectName).dll" DestinationFolder="$(GameDir)BepInEx\plugins\"/>
+    </Target>
+
+    <ItemGroup>
+        <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.43">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Folder Include="Lib\"/>
+    </ItemGroup>
+</Project>
