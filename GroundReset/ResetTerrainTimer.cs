@@ -20,7 +20,7 @@ public static class ResetTerrainTimer
     {
         LogDebug("ResetTerrainTimer.InitTimer");
         if (Helper.IsMainScene() == false) return;
-        if (Helper.IsServerSafe() == false) return;
+        if (Helper.IsServer(true) == false) return;
 
         LogDebug("Stopping existing timers");
         FunctionTimer.StopAllTimersWithName(Consts.TimerId);

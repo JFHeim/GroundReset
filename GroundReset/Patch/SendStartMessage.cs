@@ -2,9 +2,10 @@
 
 namespace GroundReset.Patch;
 
-[HarmonyPatch]
+[HarmonyPatch, HarmonyWrapSafe]
 public static class SendStartMessage
 {
-    [HarmonyPatch(typeof(Game), nameof(Game.Start))] [HarmonyWrapSafe] [HarmonyPostfix]
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(Game), nameof(Game.Start))] 
     private static void Postfix(Game __instance) => Discord.SendStartMessage();
 }

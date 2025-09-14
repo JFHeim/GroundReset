@@ -10,10 +10,26 @@ public static class Helper
         var isMainScene = scene.IsValid() && scene.name == Consts.MainSceneName;
         return isMainScene;
     }
-    
-    public static bool IsServerSafe()
+
+    public static bool IsServer(bool logIsShouldBeOnServerOnly = false)
     {
-        var znet = ZNet.instance;
-        return znet != null && znet.IsServer();
+        var gameState = GetGameServerClientState();
+        if (logIsShouldBeOnServerOnly && gameState is GameServerClientState.Client)
+            LogError($"{nameof(ModName)} is fully server-side, do not install it on clients");
+        return gameState is GameServerClientState.Client;
     }
+
+    public static GameServerClientState GetGameServerClientState() => ZNet.instance?.IsServer() switch
+    {
+        null => GameServerClientState.Unknown,
+        false => GameServerClientState.Client,
+        true => GameServerClientState.Server
+    };
+}
+
+public enum GameServerClientState
+{
+    Unknown,
+    Client,
+    Server
 }

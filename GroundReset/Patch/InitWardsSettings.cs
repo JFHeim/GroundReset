@@ -11,7 +11,7 @@ public static class InitWardsSettings
     private static void Init(ZNetScene __instance)
     {
         if (Helper.IsMainScene() == false) return;
-        if (Helper.IsServerSafe() == false) return;
+        if (Helper.IsServer(true) == false) return;
 
         RegisterWards();
     }
