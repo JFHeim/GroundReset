@@ -1,5 +1,4 @@
 ﻿using GroundReset.Compatibility.WardIsLove;
-using UnityEngine.SceneManagement;
 
 namespace GroundReset.Patch;
 
@@ -18,7 +17,7 @@ public static class InitWardsSettings
 
     public static void RegisterWards()
     {
-        wardsSettingsList.Clear();
+        Reseter.wardsSettingsList.Clear();
 
         AddWard("guard_stone");
         AddWardThorward();
@@ -37,15 +36,15 @@ public static class InitWardsSettings
         if (!prefab) return;
 
         var areaComponent = prefab.GetComponent<PrivateArea>();
-        if (wardsSettingsList.Exists(x => x.prefabName == name)) return;
-        wardsSettingsList.Add(new WardSettings(name, areaComponent.m_radius));
+        if (Reseter.wardsSettingsList.Exists(x => x.prefabName == name)) return;
+        Reseter.wardsSettingsList.Add(new WardSettings(name, areaComponent.m_radius));
     }
 
     private static void AddWardThorward()
     {
         var prefab = ZNetScene.instance.GetPrefab(Consts.ThorwardPrefabName.GetStableHashCode());
         if (!prefab) return;
-        wardsSettingsList.Add(new WardSettings(Consts.ThorwardPrefabName, zdo =>
+        Reseter.wardsSettingsList.Add(new WardSettings(Consts.ThorwardPrefabName, zdo =>
         {
             var radius = zdo.GetFloat(AzuWardZdoKeys.wardRadius);
             if (radius == 0) radius = WardIsLovePlugin.WardRange().Value;

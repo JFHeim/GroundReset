@@ -8,7 +8,7 @@ public static class Terrains
 {
     public static async Task<int> ResetTerrains(bool checkWards)
     {
-        watch.Restart();
+        Reseter.watch.Restart();
         var zdos = await ZoneSystem.instance.GetWorldObjectsAsync(Consts.TerrCompPrefabName);
         LogDebug($"Found {zdos.Count} chunks to reset");
         var resets = 0;
@@ -18,9 +18,9 @@ public static class Terrains
             resets++;
         }
 
-        var totalSeconds = TimeSpan.FromMilliseconds(watch.ElapsedMilliseconds).TotalSeconds;
+        var totalSeconds = TimeSpan.FromMilliseconds(Reseter.watch.ElapsedMilliseconds).TotalSeconds;
         LogDebug($"{resets} chunks have been reset. Took {totalSeconds} seconds");
-        watch.Restart();
+        Reseter.watch.Restart();
 
         return resets;
     }
@@ -47,14 +47,14 @@ public static class Terrains
 
         if (data == null) return;
 
-        var num = HeightmapWidth + 1;
+        var num = Reseter.HeightmapWidth + 1;
         for (var h = 0; h < num; h++)
         for (var w = 0; w < num; w++)
         {
             var idx = h * num + w;
 
             if (!data.m_modifiedHeight[idx]) continue;
-            if (checkWards && IsInWard(zoneCenter, w, h)) continue;
+            if (checkWards && Reseter.IsInWard(zoneCenter, w, h)) continue;
 
             data.m_levelDelta[idx] /= divider;
             if (Abs(data.m_levelDelta[idx]) < minHeightToSteppedReset) data.m_levelDelta[idx] = 0;
@@ -69,7 +69,7 @@ public static class Terrains
         }
 
 
-        num = HeightmapWidth;
+        num = Reseter.HeightmapWidth;
         var paintLenMun1 = data.m_modifiedPaint.Length - 1;
         for (var h = 0; h < num; h++)
         for (var w = 0; w < num; w++)
@@ -79,12 +79,12 @@ public static class Terrains
             if (!data.m_modifiedPaint[idx]) continue;
             if (checkWards || ConfigsContainer.ResetPaintResetLastly)
             {
-                var worldPos = HmapToWorld(zoneCenter, w, h);
-                if (checkWards && IsInWard(worldPos)) continue;
+                var worldPos = Reseter.HmapToWorld(zoneCenter, w, h);
+                if (checkWards && Reseter.IsInWard(worldPos)) continue;
                 if (ConfigsContainer.ResetPaintResetLastly)
                 {
-                    WorldToVertex(worldPos, zoneCenter, out var x, out var y);
-                    var heightIdx = y * (HeightmapWidth + 1) + x;
+                    Reseter.WorldToVertex(worldPos, zoneCenter, out var x, out var y);
+                    var heightIdx = y * (Reseter.HeightmapWidth + 1) + x;
                     if (data.m_modifiedHeight.Length > heightIdx && data.m_modifiedHeight[heightIdx]) continue;
                 }
             }
@@ -99,7 +99,7 @@ public static class Terrains
 
         await SaveData(zdo, data);
 
-        ClutterSystem.instance?.ResetGrass(zoneCenter, HeightmapWidth * HeightmapScale / 2);
+        ClutterSystem.instance?.ResetGrass(zoneCenter, Reseter.HeightmapWidth * Reseter.HeightmapScale / 2);
 
         foreach (var comp in TerrainComp.s_instances) comp.m_hmap?.Poke(false);
     }
@@ -217,7 +217,7 @@ public static class Terrains
             else chunkData.m_paintMask[index] = Color.black;
         }
 
-        var flag_copyColor = num2 == HeightmapWidth * HeightmapWidth;
+        var flag_copyColor = num2 == Reseter.HeightmapWidth * Reseter.HeightmapWidth;
         msg = $"flag_copyColor = {flag_copyColor}";
         debugSb.AppendLine(msg);
 
@@ -227,7 +227,7 @@ public static class Terrains
             chunkData.m_paintMask.CopyTo(colorArray, 0);
             var flagArray = new bool[chunkData.m_modifiedPaint.Length];
             chunkData.m_modifiedPaint.CopyTo(flagArray, 0);
-            var num3 = HeightmapWidth + 1;
+            var num3 = Reseter.HeightmapWidth + 1;
             msg = $"num3 = {num3}";
             debugSb.AppendLine(msg);
             for (var index1 = 0; index1 < chunkData.m_paintMask.Length; ++index1)
@@ -235,9 +235,9 @@ public static class Terrains
                 var num4 = index1 / num3;
                 var num5 = (index1 + 1) / num3;
                 var index2 = index1 - num4;
-                if (num4 == HeightmapWidth)
-                    index2 -= HeightmapWidth;
-                if (index1 > 0 && (index1 - num4) % HeightmapWidth == 0 && (index1 + 1 - num5) % HeightmapWidth == 0)
+                if (num4 == Reseter.HeightmapWidth)
+                    index2 -= Reseter.HeightmapWidth;
+                if (index1 > 0 && (index1 - num4) % Reseter.HeightmapWidth == 0 && (index1 + 1 - num5) % Reseter.HeightmapWidth == 0)
                     --index2;
                 chunkData.m_paintMask[index1] = colorArray[index2];
                 chunkData.m_modifiedPaint[index1] = flagArray[index2];

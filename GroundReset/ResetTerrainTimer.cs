@@ -12,7 +12,7 @@ public static class ResetTerrainTimer
     private static readonly Action? _onTimer = () =>
     {
         LogInfo("Timer Triggered, Resetting...");
-        ResetAll();
+        Reseter.ResetAll();
         RestartTimer();
     };
     

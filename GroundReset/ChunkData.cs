@@ -13,11 +13,11 @@
 
     public ChunkData()
     {
-        var num = HeightmapWidth + 1;
+        var num = Reseter.HeightmapWidth + 1;
         m_modifiedHeight = new bool[num * num];
         m_levelDelta = new float[m_modifiedHeight.Length];
         m_smoothDelta = new float[m_modifiedHeight.Length];
-        m_modifiedPaint = new bool[HeightmapWidth * HeightmapWidth];
+        m_modifiedPaint = new bool[Reseter.HeightmapWidth * Reseter.HeightmapWidth];
         m_paintMask = new Color[m_modifiedPaint.Length];
     }
 }
