@@ -19,6 +19,6 @@ def get_version_from_github(file_url):
         return f"Error: {e}"
 
 
-file_url = 'https://raw.githubusercontent.com/FroggerHH/GroundReset/main/Plugin.cs'
+file_url = 'https://raw.githubusercontent.com/FroggerHH/GroundReset/main/GroundReset/Plugin.cs'
 version = get_version_from_github(file_url)
 print(version)
