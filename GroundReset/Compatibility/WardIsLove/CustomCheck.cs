@@ -7,6 +7,6 @@ public class CustomCheck : ModCompat
     public static bool CheckAccess(long playerID, Vector3 point, float radius = 0f, bool flash = true)
     {
         return InvokeMethod<bool>(ClassType(), null, "CheckAccess",
-            new object[] { playerID, point, radius, flash });
+            [playerID, point, radius, flash]);
     }
 }

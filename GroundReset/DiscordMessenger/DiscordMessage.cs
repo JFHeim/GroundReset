@@ -88,7 +88,7 @@ public class DiscordMessage
             PostToDiscord(json, url);
         } else
         {
-            DebugError("Failed to serialize yaml object");
+            LogError("Failed to serialize yaml object");
         }
     }
 

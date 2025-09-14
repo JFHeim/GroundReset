@@ -9,8 +9,8 @@ public static class Terrains
     public static async Task<int> ResetTerrains(bool checkWards)
     {
         watch.Restart();
-        var zdos = await ZoneSystem.instance.GetWorldObjectsAsync(terrCompPrefabName);
-        Debug($"Found {zdos.Count} chunks to reset");
+        var zdos = await ZoneSystem.instance.GetWorldObjectsAsync(Consts.TerrCompPrefabName);
+        LogDebug($"Found {zdos.Count} chunks to reset");
         var resets = 0;
         foreach (var zdo in zdos)
         {
@@ -19,7 +19,7 @@ public static class Terrains
         }
 
         var totalSeconds = TimeSpan.FromMilliseconds(watch.ElapsedMilliseconds).TotalSeconds;
-        Debug($"{resets} chunks have been reset. Took {totalSeconds} seconds");
+        LogDebug($"{resets} chunks have been reset. Took {totalSeconds} seconds");
         watch.Restart();
 
         return resets;
@@ -27,11 +27,11 @@ public static class Terrains
 
     private static async Task ResetTerrainComp(ZDO zdo, bool checkWards)
     {
-        var divider = Plugin.dividerConfig.Value;
-        var resetSmooth = Plugin.resetSmoothingConfig.Value;
-        var resetSmoothingLast = Plugin.resetSmoothingConfig.Value;
-        var minHeightToSteppedReset = Plugin.minHeightToSteppedResetConfig.Value;
-        var zoneCenter = ZoneSystem.GetZonePos(ZoneSystem.GetZone(zdo.GetPosition()));
+        var divider                 = ConfigsContainer.Divider;
+        var resetSmooth             = ConfigsContainer.ResetSmoothing;
+        var resetSmoothingLast      = ConfigsContainer.ResetSmoothing;
+        var minHeightToSteppedReset = ConfigsContainer.MinHeightToSteppedReset;
+        var zoneCenter            = ZoneSystem.GetZonePos(ZoneSystem.GetZone(zdo.GetPosition()));
 
         ChunkData data = null;
         try
@@ -40,8 +40,8 @@ public static class Terrains
         }
         catch (Exception e)
         {
-            DebugError(e);
-            DebugError(debugSb.ToString());
+            LogError(e);
+            LogError(debugSb.ToString());
             return;
         }
 
@@ -77,11 +77,11 @@ public static class Terrains
             var idx = h * num + w;
             if (idx > paintLenMun1) continue;
             if (!data.m_modifiedPaint[idx]) continue;
-            if (checkWards || Plugin.resetPaintLast)
+            if (checkWards || ConfigsContainer.ResetPaintResetLastly)
             {
                 var worldPos = HmapToWorld(zoneCenter, w, h);
                 if (checkWards && IsInWard(worldPos)) continue;
-                if (Plugin.resetPaintLast)
+                if (ConfigsContainer.ResetPaintResetLastly)
                 {
                     WorldToVertex(worldPos, zoneCenter, out var x, out var y);
                     var heightIdx = y * (HeightmapWidth + 1) + x;
@@ -90,7 +90,7 @@ public static class Terrains
             }
 
             var currentPaint = data.m_paintMask[idx];
-            if (Plugin.debug_test) Debug($"currentPaint = {currentPaint}");
+            // LogDebug($"currentPaint = {currentPaint}");
             if (IsPaintIgnored(currentPaint)) continue;
 
             data.m_modifiedPaint[idx] = false;
@@ -104,14 +104,14 @@ public static class Terrains
         foreach (var comp in TerrainComp.s_instances) comp.m_hmap?.Poke(false);
     }
 
-    private static bool IsPaintIgnored(Color color)
-    {
-        return Plugin.paintsToIgnore.Exists(x =>
-            Abs(x.r - color.r) < Plugin.paintsCompairTolerance &&
-            Abs(x.b - color.b) < Plugin.paintsCompairTolerance &&
-            Abs(x.g - color.g) < Plugin.paintsCompairTolerance &&
-            Abs(x.a - color.a) < Plugin.paintsCompairTolerance);
-    }
+    private static bool IsPaintIgnored(Color color) =>
+        ConfigsContainer.PaintsToIgnore
+            .Exists(x =>
+                Abs(x.r - color.r) < ConfigsContainer.PaintsCompareTolerance &&
+                Abs(x.b - color.b) < ConfigsContainer.PaintsCompareTolerance &&
+                Abs(x.g - color.g) < ConfigsContainer.PaintsCompareTolerance &&
+                Abs(x.a - color.a) < ConfigsContainer.PaintsCompareTolerance
+            );
 
     private static async Task SaveData(ZDO zdo, ChunkData data)
     {
@@ -158,7 +158,7 @@ public static class Terrains
         var byteArray = zdo.GetByteArray(ZDOVars.s_TCData);
         if (byteArray == null)
         {
-            Debug("ByteArray is null, aborting chunk load");
+            LogWarning("ByteArray is null, aborting chunk load");
             return null;
         }
 
@@ -170,12 +170,11 @@ public static class Terrains
         var num1 = zPackage.ReadInt();
         if (num1 != chunkData.m_modifiedHeight.Length)
         {
-            DebugWarning("Terrain data load error, height array missmatch");
+            LogWarning("Terrain data load error, height array missmatch");
             return null;
         }
 
-        var msg =
-            $"num1 = {num1}, modifiedHeight = {chunkData.m_modifiedHeight.Length}, levelDelta = {chunkData.m_levelDelta.Length}, smoothDelta = {chunkData.m_smoothDelta.Length}";
+        var msg = $"num1 = {num1}, modifiedHeight = {chunkData.m_modifiedHeight.Length}, levelDelta = {chunkData.m_levelDelta.Length}, smoothDelta = {chunkData.m_smoothDelta.Length}";
         debugSb.AppendLine(msg);
 
         //ok
@@ -200,7 +199,7 @@ public static class Terrains
 
         if (num2 != chunkData.m_modifiedPaint.Length)
         {
-            if (Plugin.debug_paintArrayMissmatch) DebugWarning("Terrain data load error, paint array missmatch");
+            LogWarning("Terrain data load error, paint array missmatch");
             num2 = Min(num2, chunkData.m_modifiedPaint.Length, chunkData.m_paintMask.Length);
         }
 

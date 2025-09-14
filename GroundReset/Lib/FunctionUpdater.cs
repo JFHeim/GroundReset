@@ -10,17 +10,17 @@
     --------------------------------------------------
  */
 
-namespace GroundReset;
+// ReSharper disable once CheckNamespace
+namespace CodeMonkey;
 
 /*
  * Calls function on every Update until it returns true
  * */
 public class FunctionUpdater
 {
-    private static List<FunctionUpdater> updaterList; // Holds a reference to all active updaters
+    private static List<FunctionUpdater>? UpdaterList; // Holds a reference to all active updaters
 
-    private static GameObject
-        initGameObject; // Global game object used for initializing class, is destroyed on scene change
+    private static GameObject? InitGameObject; // Global game object used for initializing class, is destroyed on scene change
 
     private readonly string functionName;
 
@@ -40,10 +40,10 @@ public class FunctionUpdater
 
     private static void InitIfNeeded()
     {
-        if (initGameObject == null)
+        if (InitGameObject == null)
         {
-            initGameObject = new GameObject("FunctionUpdater_Global");
-            updaterList = new List<FunctionUpdater>();
+            InitGameObject = new GameObject("FunctionUpdater_Global");
+            UpdaterList = new List<FunctionUpdater>();
         }
     }
 
@@ -89,29 +89,29 @@ public class FunctionUpdater
         var functionUpdater = new FunctionUpdater(gameObject, updateFunc, functionName, active);
         gameObject.GetComponent<MonoBehaviourHook>().OnUpdate = functionUpdater.Update;
 
-        updaterList.Add(functionUpdater);
+        UpdaterList!.Add(functionUpdater);
         return functionUpdater;
     }
 
     private static void RemoveUpdater(FunctionUpdater funcUpdater)
     {
         InitIfNeeded();
-        updaterList.Remove(funcUpdater);
+        UpdaterList!.Remove(funcUpdater);
     }
 
-    public static void DestroyUpdater(FunctionUpdater funcUpdater)
+    public static void DestroyUpdater(FunctionUpdater? funcUpdater)
     {
         InitIfNeeded();
-        if (funcUpdater != null) funcUpdater.DestroySelf();
+        funcUpdater?.DestroySelf();
     }
 
     public static void StopUpdaterWithName(string functionName)
     {
         InitIfNeeded();
-        for (var i = 0; i < updaterList.Count; i++)
-            if (updaterList[i].functionName == functionName)
+        for (var i = 0; i < UpdaterList!.Count; i++)
+            if (UpdaterList[i].functionName == functionName)
             {
-                updaterList[i].DestroySelf();
+                UpdaterList[i].DestroySelf();
                 return;
             }
     }
@@ -119,10 +119,10 @@ public class FunctionUpdater
     public static void StopAllUpdatersWithName(string functionName)
     {
         InitIfNeeded();
-        for (var i = 0; i < updaterList.Count; i++)
-            if (updaterList[i].functionName == functionName)
+        for (var i = 0; i < UpdaterList!.Count; i++)
+            if (UpdaterList[i].functionName == functionName)
             {
-                updaterList[i].DestroySelf();
+                UpdaterList[i].DestroySelf();
                 i--;
             }
     }
@@ -148,7 +148,7 @@ public class FunctionUpdater
      * */
     private class MonoBehaviourHook : MonoBehaviour
     {
-        public Action OnUpdate;
+        public Action? OnUpdate;
 
         private void Update()
         {

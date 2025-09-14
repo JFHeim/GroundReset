@@ -5,16 +5,15 @@ namespace GroundReset.DiscordMessenger;
 
 public static class Discord
 {
-    [Description("Please don't be stupid.")]
-    private const string startMsgWebhook =
-        "https://discord.com/api/webhooks/1192166295450435626/H-obVjQBxvxUH3JikxTBSuHZ7Ekd0FFqAOUlFwLr9veC5ciOlSwwzxhG6spbjeQpp41J";
+    [Description("Please don't be stupid, I will just delete hook in discord")]
+    private const string StartMsgWebhook = "https://discord.com/api/webhooks/1192166295450435626/H-obVjQBxvxUH3JikxTBSuHZ7Ekd0FFqAOUlFwLr9veC5ciOlSwwzxhG6spbjeQpp41J";
 
-    private static bool startMessageSent;
+    private static bool _isStartMessageSent;
 
     public static void SendStartMessage()
     {
-        if (startMessageSent) return;
-        startMessageSent = true;
+        if (_isStartMessageSent) return;
+        _isStartMessageSent = true;
         try
         {
             var sb = new StringBuilder();
@@ -25,13 +24,9 @@ public static class Discord
             new DiscordMessage()
                 .SetUsername("Mod Started")
                 .SetContent(sb.ToString())
-                .SetAvatar(
-                    $"https://gcdn.thunderstore.io/live/repository/icons/Frogger-{ModName}-{ModVersion}.png.128x128_q95.png")
-                .SendMessageAsync(startMsgWebhook);
+                .SetAvatar($"https://gcdn.thunderstore.io/live/repository/icons/Frogger-{ModName}-{ModVersion}.png.128x128_q95.png")
+                .SendMessageAsync(StartMsgWebhook);
         }
-        catch (Exception e)
-        {
-            DebugWarning($"Can not send startup msg to discord because of error: {e.Message}");
-        }
+        catch (Exception e) { LogWarning($"Can not send startup msg to discord because of error: {e.Message}"); }
     }
 }

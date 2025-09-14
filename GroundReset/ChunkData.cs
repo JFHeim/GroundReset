@@ -1,6 +1,6 @@
 ﻿namespace GroundReset;
 
-[Serializable] internal class ChunkData
+[Serializable] public class ChunkData
 {
     public bool[] m_modifiedHeight;
     public float[] m_levelDelta;

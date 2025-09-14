@@ -3,18 +3,20 @@ using UnityEngine.SceneManagement;
 
 namespace GroundReset.Patch;
 
-[HarmonyPatch] internal class InitWardsSettings
+[HarmonyPatch, HarmonyWrapSafe] 
+public static class InitWardsSettings
 {
-    [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.Awake))] [HarmonyPostfix] [HarmonyWrapSafe]
-    internal static void Init(ZNetScene __instance)
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.Awake))] 
+    private static void Init(ZNetScene __instance)
     {
-        if (SceneManager.GetActiveScene().name != "main") return;
-        if (!ZNet.instance.IsServer()) return;
+        if (Helper.IsMainScene() == false) return;
+        if (Helper.IsServerSafe() == false) return;
 
         RegisterWards();
     }
 
-    internal static void RegisterWards()
+    public static void RegisterWards()
     {
         wardsSettingsList.Clear();
 
@@ -24,7 +26,7 @@ namespace GroundReset.Patch;
         if (ZNetScene.instance && ZNetScene.instance.m_prefabs != null && ZNetScene.instance.m_prefabs.Count > 0)
         {
             var foundWards = ZNetScene.instance.m_prefabs.Where(x => x.GetComponent<PrivateArea>()).ToList();
-            Debug($"Found {foundWards.Count} wards: {foundWards.GetString()}");
+            LogDebug($"Found {foundWards.Count} wards: {foundWards.GetString()}");
             foreach (var privateArea in foundWards) AddWard(privateArea.name);
         }
     }
@@ -41,13 +43,12 @@ namespace GroundReset.Patch;
 
     private static void AddWardThorward()
     {
-        var name = "Thorward";
-        var prefab = ZNetScene.instance.GetPrefab(name.GetStableHashCode());
+        var prefab = ZNetScene.instance.GetPrefab(Consts.ThorwardPrefabName.GetStableHashCode());
         if (!prefab) return;
-        wardsSettingsList.Add(new WardSettings(name, zdo =>
+        wardsSettingsList.Add(new WardSettings(Consts.ThorwardPrefabName, zdo =>
         {
             var radius = zdo.GetFloat(AzuWardZdoKeys.wardRadius);
-            if (radius == 0) return WardIsLovePlugin.WardRange().Value;
+            if (radius == 0) radius = WardIsLovePlugin.WardRange().Value;
             return radius;
         }));
     }
