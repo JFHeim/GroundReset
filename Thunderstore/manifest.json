@@ -1,0 +1,9 @@
+{
+    "name": "GroundReset",
+    "version_number": "2.7.0",
+    "website_url": "https://github.com/JFHeim/GroundReset",
+    "description": "Automatically and gradually resets the terrain across the map, taking into account player's wards and market zones. Fully server-side",
+    "dependencies": [
+        "denikson-BepInExPack_Valheim-5.4.2333"
+    ]
+}

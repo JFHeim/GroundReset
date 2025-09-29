@@ -1,4 +1,4 @@
-<img src="https://gcdn.thunderstore.io/live/repository/icons/Frogger-GroundReset-2.4.2.png.128x128_q95.png" align="right" alt="Project Logo" style="border-radius: 10px;">
+<img src="https://gcdn.thunderstore.io/live/repository/icons/Frogger-GroundReset-2.5.1.png.128x128_q95.png" align="right" alt="Project Logo" style="border-radius: 10px;">
 
 # GroundReset
 
@@ -53,7 +53,7 @@ The two important values are:
 
 For more detailed configuration, use the configs below:
 
-- `Reset Paint` \[Boolean]: Should the terrain paint be reset
+- `Paint To Ignore` \[Boolean]: List of terrain paints that will be not reset. Valina paints are Dirt, Cultivated, Paved, Nothing. '(Cultivated) , (Paved)' means that Cultivated and Paved paints won't be reset. For paints from mods you can pass color in rbga format '(r, b, g, a)'
 - `Reset Smoothing` \[Boolean]: Should the terrain smoothing be reset
 - `Process Paint Lastly` \[Boolean]: Set to true so that the paint is reset only after the ground height delta and
   smoothing is completely reset. Otherwise, the paint will be reset at each reset step along with the height delta.
