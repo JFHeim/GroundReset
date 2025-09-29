@@ -9,6 +9,8 @@ public static class Terrains
 {
     public static async Task<int> ResetTerrains(bool checkWards, int? maxDegreeOfParallelism = null)
     {
+        MessageHud.instance.MessageAll(MessageHud.MessageType.TopLeft, "Идёт сброс ландшафта...");
+        
         Reseter.watch.Restart();
         var zdos = await ZoneSystem.instance.GetWorldObjectsAsync(Consts.TerrCompPrefabName);
         
@@ -22,47 +24,53 @@ public static class Terrains
         LogInfo($"Found {zdos.Count} chunks to reset", insertTimestamp:true);
         
         int dop = maxDegreeOfParallelism ?? Math.Max(1, Environment.ProcessorCount - 1);
-        var semaphore = new SemaphoreSlim(dop, dop);
-        var tasks = new List<Task>(zdos.Count);
-        
-        int completed = 0;
-        void ReportProgress()
-        {
-            var c = Interlocked.Increment(ref completed);
-            if ((c & 63) == 0) LogInfo($"Progress: {c}/{zdos.Count}");
-        }
-        
+        using var semaphore = new SemaphoreSlim(dop, dop);
         var results = new ConcurrentBag<(ZDO zdo, ChunkData data)>();
 
-        foreach (var zdo in zdos)
+        int completed = 0;
+
+        const int BATCH_SIZE = 32;
+        int currentBatchIndex = 0;
+
+        for (int i = 0; i < zdos.Count; i += BATCH_SIZE)
         {
-            await semaphore.WaitAsync().ConfigureAwait(false);
-            var task = Task.Run(async () =>
+            var count = Math.Min(BATCH_SIZE, zdos.Count - i);
+            var batchTasks = new List<Task>(count);
+
+            for (int j = 0; j < count; j++)
             {
-                try
+                var zdo = zdos[i + j];
+                await semaphore.WaitAsync();
+
+                var t = Task.Run(async () =>
                 {
-                    ChunkData? newChunkData = await ResetTerrainComp(zdo, checkWards).ConfigureAwait(false);
-                    if (newChunkData is not null)
+                    try
                     {
-                        results.Add((zdo, newChunkData));
-                        ReportProgress();
+                        ChunkData? newChunkData = await ResetTerrainComp(zdo, checkWards);
+
+                        if (newChunkData is not null)
+                        {
+                            results.Add((zdo, newChunkData));
+                            Interlocked.Increment(ref completed);
+                        }
                     }
-                }
-                catch (Exception ex)
-                {
-                    // Лог ошибочного чанка, чтобы не ронять весь процесс
-                    LogWarning($"ResetTerrainComp failed for zdo {zdo.m_uid}: {ex}");
-                }
-                finally
-                {
-                    semaphore.Release();
-                }
-            });
+                    catch (Exception ex) { LogWarning($"ResetTerrainComp failed for zdo {zdo.m_uid}: {ex}"); }
+                    finally
+                    {
+                        try { semaphore.Release(); }
+                        catch (ObjectDisposedException) { LogError("ObjectDisposedException from ResetTerrains for SemaphoreSlim"); }
+                    }
+                });
 
-            tasks.Add(task);
+                batchTasks.Add(t);
+            }
+
+            LogInfo($"Processing batch {currentBatchIndex}");
+            await Task.WhenAll(batchTasks);
+            currentBatchIndex++;
+            await Task.Yield();
         }
-
-        await Task.WhenAll(tasks).ConfigureAwait(false);
+        
         LogInfo($"New data been generated for {completed} chunks. Applying each to game world...", insertTimestamp:true);
         
         int saved = 0;
@@ -73,19 +81,16 @@ public static class Terrains
                 SaveData(zdo, data);
                 saved++;
             }
-            catch (Exception ex)
-            {
-                LogWarning($"SaveData failed for zdo {zdo.m_uid}: {ex}");
-            }
+            catch (Exception ex) { LogWarning($"SaveData failed for zdo {zdo.m_uid}: {ex}"); }
         }
 
-        foreach (var comp in TerrainComp.s_instances)
-            comp.m_hmap?.Poke(false);
+        foreach (var comp in TerrainComp.s_instances) comp.m_hmap?.Poke(false);
 
         var totalSeconds = TimeSpan.FromMilliseconds(Reseter.watch.ElapsedMilliseconds).TotalSeconds;
         LogInfo($"{completed} chunks have been reset, {saved} saved. Took {totalSeconds} seconds", insertTimestamp:true);
         Reseter.watch.Stop();
 
+        MessageHud.instance.MessageAll(MessageHud.MessageType.TopLeft, "Сброс ландшафта завершён");
         return completed;
     }
 
@@ -98,10 +103,7 @@ public static class Terrains
         var zoneCenter            = ZoneSystem.GetZonePos(ZoneSystem.GetZone(zdo.GetPosition()));
 
         ChunkData? data;
-        try
-        {
-            data = LoadOldData(zdo);
-        }
+        try { data = LoadOldData(zdo); }
         catch (Exception e)
         {
             LogError(e);
@@ -129,6 +131,8 @@ public static class Terrains
 
             var flag_b = resetSmooth && data.m_smoothDelta[idx] != 0;
             data.m_modifiedHeight[idx] = data.m_levelDelta[idx] != 0 || flag_b;
+            
+            if (idx % 1_000 == 0) await Task.Yield();
         }
         
         var paintLenMun1 = data.m_modifiedPaint.Length - 1;
@@ -154,10 +158,11 @@ public static class Terrains
                     if (data.m_modifiedHeight.Length > heightIdx && data.m_modifiedHeight[heightIdx]) continue;
                 }
             }
-
             
             data.m_modifiedPaint[idx] = false;
             data.m_paintMask[idx] = Heightmap.m_paintMaskNothing;
+            
+            if (idx % 1_000 == 0) await Task.Yield();
         }
 
         return data;

@@ -117,7 +117,7 @@ public class FunctionTimer
         if (Timer <= 0)
         {
             // Timer complete, trigger Action
-            onEndAction();
+            onEndAction.Invoke();
             DestroySelf();
         }
     }

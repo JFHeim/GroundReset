@@ -78,8 +78,7 @@
 
     <Target Name="CopyDLL" AfterTargets="ILRepack">
         <Copy SourceFiles="$(TargetDir)$(ProjectName).dll" DestinationFolder="$(GameDir)BepInEx\plugins\"/>
-<!--        <Copy SourceFiles="$(TargetDir)$(ProjectName).pdb" DestinationFolder="$(GameDir)BepInEx\plugins\"/>-->
-        <Copy SourceFiles="$(TargetDir)$(ProjectName).dll.config" DestinationFolder="$(GameDir)BepInEx\plugins\"/>
+        <Message Text="Copped $(TargetDir)$(ProjectName).dll to $(GameDir)BepInEx\plugins\"/>
     </Target>
 
     <ItemGroup>

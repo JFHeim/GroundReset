@@ -9,6 +9,8 @@ public static class ResetTerrainTimer
 
     private static TimeSpan LastTimerTimePassed = TimeSpan.Zero;
 
+    // private static ResetProcessState _resetProcessState = ResetProcessState.NotRunning;
+
     private static readonly Action? _onTimer = async void () =>
     {
         try
@@ -107,8 +109,16 @@ public static class ResetTerrainTimer
         
         var timerPassedTimeOnSeconds = Timer.Timer;
         LastTimerTimePassed = TimeSpan.FromSeconds(timerPassedTimeOnSeconds);
-        File.WriteAllText(timerPassedTimeSaveFilePath, timerPassedTimeOnSeconds.ToString(NumberFormatInfo.InvariantInfo));
-        
+        File.WriteAllText(timerPassedTimeSaveFilePath,
+            timerPassedTimeOnSeconds.ToString(NumberFormatInfo.InvariantInfo));
+
         LogInfo($@"Saved timer passed time to file: {LastTimerTimePassed:hh\:mm\:ss}");
     }
+
+    // private enum ResetProcessState
+    // {
+    //     NotRunning,
+    //     Running,
+    // }
 }
+
