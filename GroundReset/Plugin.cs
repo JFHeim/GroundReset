@@ -5,7 +5,7 @@ public class Plugin : BepInEx.BaseUnityPlugin
 {
     private const string ModName = "GroundReset",
         ModAuthor = "Frogger",
-        ModVersion = "2.7.0",
+        ModVersion = "2.7.1",
         ModGuid = $"com.{ModAuthor}.{ModName}";
     
     private void Awake()

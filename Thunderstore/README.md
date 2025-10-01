@@ -1,8 +1,8 @@
-<img src="https://gcdn.thunderstore.io/live/repository/icons/Frogger-GroundReset-2.5.1.png.128x128_q95.png" align="right" alt="Project Logo" style="border-radius: 10px;">
+<img src="https://gcdn.thunderstore.io/live/repository/icons/Frogger-GroundReset-2.7.1.png.128x128_q95.png" align="right" alt="Project Logo" style="border-radius: 10px;">
 
 # GroundReset
 
-![Version Badge](https://img.shields.io/badge/version-2.7.0-green.svg)
+![Version Badge](https://img.shields.io/badge/version-2.7.1-green.svg)
 
 A dedicated server mod that restores terrain back to its original state gradually over a configurable rate.
 

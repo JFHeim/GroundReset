@@ -12,3 +12,6 @@ ArcaneWard support;
 Works with Valheim 1.0.221.4;
 Better code parallelism;
 Doesn't kick players during reset
+
+### 2.7.1
+Removed discord webhook to pass thunderstore moderation
