@@ -61,6 +61,11 @@ public static class InitWardsSettings
         Reseter.wardsSettingsList.Add(new WardSettings(Consts.ArcaneWardPrefabName, zdo =>
         {
             var radius = zdo.GetInt(Consts.ArcaneWardZdoKey);
+
+            // I don't feel motivated enough to dig into thoughts behind why radius being zero should be overwritten, but let's keep an eye on it
+            // https://github.com/shudnal/GroundReset/commit/7e0e3970400e5f617c796862f311982860ce6ccc#diff-e85d0c645d39150699ea1c29728847fafcea54e5277789ca401294d42a0e4de7R69
+            // if (radius == 0) return 64;
+
             return radius;
         }));
     }
