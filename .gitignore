@@ -399,3 +399,4 @@ FodyWeavers.xsd
 *.sln.iml
 Thunderstore/GroundReset.dll
 /.idea
+/Thunderstore/*.zip
