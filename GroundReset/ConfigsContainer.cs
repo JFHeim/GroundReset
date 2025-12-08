@@ -64,26 +64,30 @@ public class ConfigsContainer
         // _debugTestConfig               = config("Debug",                    "Do some dev goofy debugs",                 false,                   "");
         // _debugPaintArrayMismatchConfig = config("Debug",                    "Debug Paint Array Missmatch",              true,                    "Should mod notify if the number of colors in the paint array does not match the number of colors in the paint mask.Yes, that is an error, but idk what to with it");
 
-        IsInitialized = true;
         
-        OnConfigurationChanged += UpdateConfiguration;
+        OnConfigurationChanged += () =>
+        {
+            LogInfo("Configuration Received");
+            
+            if(DateTime.Now - LastConfigUpdateTime < TimeSpan.FromSeconds(1)) return;
+            LastConfigUpdateTime = DateTime.Now;
+
+            ApplyConfiguration();
+            
+            LogInfo("Configuration applied");
+        };
+        
+        IsInitialized = true;
     }
 
     public static void InitializeConfiguration() => Instance = new ConfigsContainer();
 
-    private void UpdateConfiguration()
+    private void ApplyConfiguration()
     {
-        if(DateTime.Now - LastConfigUpdateTime < TimeSpan.FromSeconds(1)) return;
-
         var diff = Math.Abs(_lastTriggerIntervalInMinutes - TriggerIntervalInMinutes);
         var isMainScene = Helper.IsMainScene();
         
-        LogInfo($"diff={diff:F00}, isMainScene={isMainScene}");
-        
-        if (diff > 1f && isMainScene)
-        {
-            ResetTerrainTimer.RestartTimer();
-        }
+        if (diff > 1f && isMainScene) ResetTerrainTimer.RestartTimer();
         _lastTriggerIntervalInMinutes = TriggerIntervalInMinutes;
 
         ResetTerrainTimer.LoadTimePassedFromFile();
@@ -91,8 +95,6 @@ public class ConfigsContainer
         
         if (ZNetScene.instance) InitWardsSettings.RegisterWards();
         LogInfo($"PaintsToIgnore = {PaintsToIgnore.GetString()}");
-        
-        LogInfo("Configuration Received");
     }
 
     private void ParsePaints(string str)

@@ -5,8 +5,8 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         
-        <AssemblyVersion>2.7.0</AssemblyVersion>
-        <FileVersion>2.7.0</FileVersion>
+        <AssemblyVersion>2.7.2</AssemblyVersion>
+        <FileVersion>2.7.2</FileVersion>
 
         <GameDir>/home/vych/.local/share/Steam/steamapps/common/Valheim dedicated server/</GameDir>
         <ManagedAssemblesDir>$(GameDir)valheim_server_Data/Managed/</ManagedAssemblesDir>
