@@ -2,7 +2,7 @@ using System.Globalization;
 using BepInEx.Configuration;
 using GroundReset.Patch;
 
-namespace GroundReset;
+namespace GroundReset.Config;
 
 public class ConfigsContainer
 {

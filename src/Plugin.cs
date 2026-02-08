@@ -1,4 +1,6 @@
-﻿namespace GroundReset;
+﻿using GroundReset.Config;
+
+namespace GroundReset;
 
 [BepInEx.BepInPlugin(ModGuid, ModName, ModVersion)]
 public class Plugin : BepInEx.BaseUnityPlugin
