@@ -2,5 +2,5 @@
     <Configurations>
         <Platform Name="Any CPU" />
     </Configurations>
-    <Project Path="GroundReset/GroundReset.csproj" />
+    <Project Path="src\GroundReset.csproj" />
 </Solution>
