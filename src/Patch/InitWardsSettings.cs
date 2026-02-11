@@ -29,7 +29,7 @@ public static class InitWardsSettings
             foreach (var privateArea in foundWards) AddWard(privateArea.name);
         }
         
-        LogInfo($"Found {Reseter.wardsSettingsList.Count} wards: {Reseter.wardsSettingsList.Select(x=>x.prefabName).ToArray().GetString()}");
+        Log.Info($"Found {Reseter.wardsSettingsList.Count} wards: {string.Join(",", Reseter.wardsSettingsList.Select(x=>x.prefabName).ToArray())}");
     }
 
     private static void AddWard(string name)

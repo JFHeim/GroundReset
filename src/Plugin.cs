@@ -2,17 +2,13 @@
 
 namespace GroundReset;
 
-[BepInEx.BepInPlugin(ModGuid, ModName, ModVersion)]
+[BepInEx.BepInPlugin(Consts.ModGuid, Consts.ModName, Consts.ModVersion)]
 public class Plugin : BepInEx.BaseUnityPlugin
 {
-    private const string ModName = "GroundReset",
-        ModAuthor = "Frogger",
-        ModVersion = "2.7.2",
-        ModGuid = $"com.{ModAuthor}.{ModName}";
-
     private void Awake()
     {
-        CreateMod(this, ModName, ModAuthor, ModVersion, ModGuid);
-        ConfigsContainer.InitializeConfiguration();
+        Log.InitializeConfiguration(this);
+        new Harmony(Consts.ModGuid).PatchAll();
+        ConfigsContainer.InitializeConfiguration(this);
     }
 }

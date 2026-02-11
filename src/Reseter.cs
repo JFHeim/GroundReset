@@ -23,7 +23,7 @@ public static class Reseter
         }
         catch (Exception e)
         {
-            LogError($"ResetAll failed with exception: {e}");
+            Log.Error($"ResetAll failed with exception: {e}");
         }
     }
 
@@ -34,12 +34,12 @@ public static class Reseter
         for (var i = 0; i < wardsSettingsList.Count; i++)
         {
             var wardsSettings = wardsSettingsList[i];
-            var zdos = await ZoneSystem.instance.GetWorldObjectsAsync(wardsSettings.prefabName);
+            var zdos = await ZDOMan.instance.GetWorldObjectsAsync(wardsSettings.prefabName);
             wards = wards.Concat(zdos).ToList();
         }
 
         var totalSeconds = TimeSpan.FromMilliseconds(watch.ElapsedMilliseconds).TotalSeconds;
-        LogWarning($"Wards count: {wards.Count}. Took {totalSeconds} seconds");
+        Log.Warning($"Wards count: {wards.Count}. Took {totalSeconds} seconds");
         watch.Restart();
     }
 
@@ -65,7 +65,7 @@ public static class Reseter
         var wardRadius = wardSettings.dynamicRadius
             ? wardSettings.getDynamicRadius(searchWard)
             : wardSettings.radius;
-        var inRange = pos.DistanceXZ(searchWard.GetPosition()) <= wardRadius + checkRadius;
+        var inRange = Utils.DistanceXZ(pos, searchWard.GetPosition()) <= wardRadius + checkRadius;
         return inRange;
     }) || MarketplaceTerritorySystem.PointInTerritory(pos);
 

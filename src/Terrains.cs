@@ -13,19 +13,19 @@ public static class Terrains
         MessageHud.instance.MessageAll(MessageHud.MessageType.TopLeft, "Идёт сброс ландшафта...");
         
         Reseter.watch.Restart();
-        var zdos = await ZoneSystem.instance.GetWorldObjectsAsync(Consts.TerrCompPrefabName);
-        
+        List<ZDO> zdos = await ZDOMan.instance.GetWorldObjectsAsync(Consts.TerrCompPrefabName);
+
         if (zdos.Count == 0)
         {
-            LogInfo("0 chunks have been reset. Took 0.0 seconds");
+            Log.Info("0 chunks have been reset. Took 0.0 seconds");
             Reseter.watch.Stop();
             return 0;
         }
         
-        LogInfo($"Found {zdos.Count} chunks to reset", insertTimestamp:true);
+        Log.Info($"Found {zdos.Count} chunks to reset", insertTimestamp:true);
         
         int dop = maxDegreeOfParallelism ?? Math.Max(1, Environment.ProcessorCount - 1);
-        using var semaphore = new SemaphoreSlim(dop, dop);
+        SemaphoreSlim? semaphore = new SemaphoreSlim(dop, dop);
         var results = new ConcurrentBag<(ZDO zdo, ChunkData data)>();
 
         int completed = 0;
@@ -55,24 +55,30 @@ public static class Terrains
                             Interlocked.Increment(ref completed);
                         }
                     }
-                    catch (Exception ex) { LogWarning($"ResetTerrainComp failed for zdo {zdo.m_uid}: {ex}"); }
+                    catch (Exception ex) { Log.Warning($"ResetTerrainComp failed for zdo {zdo.m_uid}: {ex}"); }
                     finally
                     {
-                        try { semaphore.Release(); }
-                        catch (ObjectDisposedException) { LogError("ObjectDisposedException from ResetTerrains for SemaphoreSlim"); }
+                        try { semaphore?.Release(); }
+                        catch (ObjectDisposedException)
+                        {
+                            semaphore = null;
+                            Log.Error("ObjectDisposedException from ResetTerrains for SemaphoreSlim");
+                        }
                     }
                 });
 
                 batchTasks.Add(t);
             }
 
-            LogInfo($"Processing batch {currentBatchIndex}");
+            Log.Info($"Processing batch {currentBatchIndex}");
             await Task.WhenAll(batchTasks);
             currentBatchIndex++;
             await Task.Yield();
         }
+
+        semaphore.Dispose();
         
-        LogInfo($"New data been generated for {completed} chunks. Applying each to game world...", insertTimestamp:true);
+        Log.Info($"New data been generated for {completed} chunks. Applying each to game world...", insertTimestamp:true);
         
         int saved = 0;
         foreach (var (zdo, data) in results)
@@ -82,13 +88,13 @@ public static class Terrains
                 SaveData(zdo, data);
                 saved++;
             }
-            catch (Exception ex) { LogWarning($"SaveData failed for zdo {zdo.m_uid}: {ex}"); }
+            catch (Exception ex) { Log.Warning($"SaveData failed for zdo {zdo.m_uid}: {ex}"); }
         }
 
         foreach (var comp in TerrainComp.s_instances) comp.m_hmap?.Poke(false);
 
         var totalSeconds = TimeSpan.FromMilliseconds(Reseter.watch.ElapsedMilliseconds).TotalSeconds;
-        LogInfo($"{completed} chunks have been reset, {saved} saved. Took {totalSeconds} seconds", insertTimestamp:true);
+        Log.Info($"{completed} chunks have been reset, {saved} saved. Took {totalSeconds} seconds", insertTimestamp:true);
         Reseter.watch.Stop();
 
         MessageHud.instance.MessageAll(MessageHud.MessageType.TopLeft, "Сброс ландшафта завершён");
@@ -107,7 +113,7 @@ public static class Terrains
         try { data = LoadOldData(zdo); }
         catch (Exception e)
         {
-            LogError(e);
+            Log.Error(e);
             return null;
         }
 
@@ -219,7 +225,7 @@ public static class Terrains
         var byteArray = zdo.GetByteArray(ZDOVars.s_TCData);
         if (byteArray == null)
         {
-            LogWarning("ByteArray is null, aborting chunk load");
+            Log.Warning("ByteArray is null, aborting chunk load");
             return null;
         }
 
@@ -231,7 +237,7 @@ public static class Terrains
         var num1 = zPackage.ReadInt();
         if (num1 != chunkData.m_modifiedHeight.Length)
         {
-            LogWarning("Terrain data load error, height array missmatch");
+            Log.Warning("Terrain data load error, height array missmatch");
             return null;
         }
 
@@ -254,7 +260,7 @@ public static class Terrains
 
         if (num2 != chunkData.m_modifiedPaint.Length)
         {
-            LogWarning($"Terrain data load error, paint array missmatch, num2={num2}, modifiedPaint.Length={chunkData.m_modifiedPaint.Length}, paintMask.Length={chunkData.m_paintMask.Length}");
+            Log.Warning($"Terrain data load error, paint array missmatch, num2={num2}, modifiedPaint.Length={chunkData.m_modifiedPaint.Length}, paintMask.Length={chunkData.m_paintMask.Length}");
             num2 = Max(num2, chunkData.m_modifiedPaint.Length, chunkData.m_paintMask.Length);
             if(chunkData.m_modifiedPaint.Length != num2) Array.Resize(ref chunkData.m_modifiedPaint, num2);
             if(chunkData.m_paintMask.Length != num2)     Array.Resize(ref chunkData.m_paintMask, num2);
@@ -297,7 +303,7 @@ public static class Terrains
             }
         }
 
-        // LogInfo(debugSb.ToString());
+        // Log.Instance.Info(debugSb.ToString());
         return chunkData;
     }
 }

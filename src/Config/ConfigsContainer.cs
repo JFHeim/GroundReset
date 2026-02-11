@@ -4,20 +4,8 @@ using GroundReset.Patch;
 
 namespace GroundReset.Config;
 
-public class ConfigsContainer
+public partial class ConfigsContainer
 {
-    public static ConfigsContainer Instance
-    {
-        get
-        {
-            System.Diagnostics.Debug.Assert(IsInitialized == true);
-            return field;
-        }
-        private set;
-    } = null!;
-    private static bool IsInitialized = false;
-    private static DateTime LastConfigUpdateTime = DateTime.MinValue;
-
     public static float TriggerIntervalInMinutes => Instance._triggerIntervalInMinutesConfig.Value;
     // public static float SavedTimeUpdateInterval => Instance._savedTimeUpdateIntervalConfig.Value;
     public static float Divider => Instance._dividerConfig.Value;
@@ -55,7 +43,7 @@ public class ConfigsContainer
         _dividerConfig                    = config("General",      "Divider",                                  1.7f,                    "The divider for the terrain restoration. Current value will be divided by this value. Learn more on mod page.");
         _minHeightToSteppedResetConfig    = config("General",      "Min Height To Stepped Reset",              0.2f,                    "If the height delta is lower than this value, it will be counted as zero.");
         // _savedTimeUpdateIntervalConfig    = config("General",      "SavedTime Update Interval (seconds)",      120f,                    "How often elapsed time will be saved to config file.");
-        _paintsToIgnoreConfig             = config("General",      "Paint To Ignore",                          "(Paved), (Cultivated)", $"This paints will be ignored in the reset process.\n{vanillaPresets.Keys.GetString()}");
+        _paintsToIgnoreConfig             = config("General",      "Paint To Ignore",                          "(Paved), (Cultivated)", $"This paints will be ignored in the reset process.\n{string.Join(",", vanillaPresets.Keys)}");
         _paintsCompareToleranceConfig     = config("General",      "Paints Compair Tolerance",                 0.3f,                    "The accuracy of the comparison of colors. Since the current values of the same paint may differ from the reference in different situations, they have to be compared with the difference in this value.");
         _resetSmoothingConfig             = config("General",      "Reset Smoothing",                          true,                    "Should the terrain smoothing be reset");
         _resetPaintResetLastlyConfig      = config("General",      "Process Paint Lastly",                     true,                    "Set to true so that the paint is reset only after the ground height delta and smoothing is completely reset. Otherwise, the paint will be reset at each reset step along with the height delta.");
@@ -63,24 +51,7 @@ public class ConfigsContainer
         // _debugConfig                   = config("Debug",                    "Do some test debugs",                      false,                   "");
         // _debugTestConfig               = config("Debug",                    "Do some dev goofy debugs",                 false,                   "");
         // _debugPaintArrayMismatchConfig = config("Debug",                    "Debug Paint Array Missmatch",              true,                    "Should mod notify if the number of colors in the paint array does not match the number of colors in the paint mask.Yes, that is an error, but idk what to with it");
-
-        
-        OnConfigurationChanged += () =>
-        {
-            LogInfo("Configuration Received");
-            
-            if(DateTime.Now - LastConfigUpdateTime < TimeSpan.FromSeconds(1)) return;
-            LastConfigUpdateTime = DateTime.Now;
-
-            ApplyConfiguration();
-            
-            LogInfo("Configuration applied");
-        };
-        
-        IsInitialized = true;
     }
-
-    public static void InitializeConfiguration() => Instance = new ConfigsContainer();
 
     private void ApplyConfiguration()
     {
@@ -94,7 +65,7 @@ public class ConfigsContainer
         ParsePaints(_paintsToIgnoreConfig.Value);
         
         if (ZNetScene.instance) InitWardsSettings.RegisterWards();
-        LogInfo($"PaintsToIgnore = {PaintsToIgnore.GetString()}");
+        Log.Info($"PaintsToIgnore = {string.Join(",", PaintsToIgnore)}");
     }
 
     private void ParsePaints(string str)
@@ -116,7 +87,7 @@ public class ConfigsContainer
 
             if (keyValue.Length != 4)
             {
-                LogError($"Could not parse color: '{keyValue.GetString()}', expected format: (r, b, g, alpha)\n" + vanillaPresets.Keys.GetString());
+                Log.Error($"Could not parse color: '{string.Join(",", keyValue)}', expected format: (r, b, g, alpha)\n" + string.Join(",", vanillaPresets.Keys));
                 continue;
             }
 
@@ -127,25 +98,25 @@ public class ConfigsContainer
 
             if (!float.TryParse(aStr, NumberStyles.Float, CultureInfo.InvariantCulture, out var a))
             {
-                LogError($"Could not parse a value: '{aStr}'");
+                Log.Error($"Could not parse a value: '{aStr}'");
                 continue;
             }
 
             if (!float.TryParse(bStr, NumberStyles.Float, CultureInfo.InvariantCulture, out var b))
             {
-                LogError($"Could not parse b value: '{bStr}'");
+                Log.Error($"Could not parse b value: '{bStr}'");
                 continue;
             }
 
             if (!float.TryParse(gStr, NumberStyles.Float, CultureInfo.InvariantCulture, out var g))
             {
-                LogError($"Could not parse g value: '{gStr}'");
+                Log.Error($"Could not parse g value: '{gStr}'");
                 continue;
             }
 
             if (!float.TryParse(alphaStr, NumberStyles.Float, CultureInfo.InvariantCulture, out var alpha))
             {
-                LogError($"Could not parse alpha value: '{alphaStr}'");
+                Log.Error($"Could not parse alpha value: '{alphaStr}'");
                 continue;
             }
 

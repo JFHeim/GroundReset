@@ -16,14 +16,14 @@ public static class ResetTerrainTimer
     {
         try
         {
-            LogInfo("Timer Triggered, starting chunks reset", insertTimestamp:true);
+            Log.Info("Timer Triggered, starting chunks reset", insertTimestamp:true);
             await Reseter.ResetAll();
-            LogInfo("Timer Triggered, chunks have been reset, restarting the timer", insertTimestamp:true);
+            Log.Info("Timer Triggered, chunks have been reset, restarting the timer", insertTimestamp:true);
             RestartTimer();
         }
         catch (Exception exception1)
         {
-            LogError($"OnTimer event failed with exception: {exception1}"); 
+            Log.Error($"OnTimer event failed with exception: {exception1}"); 
             RestartTimer();
         }
     };
@@ -32,11 +32,11 @@ public static class ResetTerrainTimer
     {
         try
         {
-            LogInfo($"{nameof(ResetTerrainTimer)}.{nameof(RestartTimer)}");
+            Log.Info($"{nameof(ResetTerrainTimer)}.{nameof(RestartTimer)}");
             if (Helper.IsMainScene() == false) return;
             if (Helper.IsServer(true) == false) return;
 
-            LogInfo("Stopping existing timers");
+            Log.Info("Stopping existing timers");
             FunctionTimer.StopAllTimersWithName(Consts.TimerId);
             Timer = null;
             
@@ -49,7 +49,7 @@ public static class ResetTerrainTimer
                 if(timerInterval.TotalSeconds <= 0) timerInterval = TimeSpan.FromSeconds(1);
             }
             
-            LogInfo($@"Creating new timer for {timerInterval:hh\:mm\:ss}", insertTimestamp:true);
+            Log.Info($@"Creating new timer for {timerInterval:hh\:mm\:ss}", insertTimestamp:true);
 
             try
             {
@@ -62,13 +62,13 @@ public static class ResetTerrainTimer
             }
             catch (Exception e)
             {
-                LogError($"FunctionTimer.Create failed with exception: {e}");
+                Log.Error($"FunctionTimer.Create failed with exception: {e}");
             }
             LastTimerTimePassed = TimeSpan.Zero;
         }
         catch (Exception exception)
         {
-            LogError($"{nameof(RestartTimer)} failed with exception: {exception}");
+            Log.Error($"{nameof(RestartTimer)} failed with exception: {exception}");
         }
     }
 
@@ -86,14 +86,14 @@ public static class ResetTerrainTimer
         var readAllText = File.ReadAllText(timerPassedTimeSaveFilePath);
         if (!float.TryParse(readAllText, NumberStyles.Float, NumberFormatInfo.InvariantInfo, out var value))
         {
-            LogWarning("Failed to read invalid value from timer save file, overwritten with zero");
+            Log.Warning("Failed to read invalid value from timer save file, overwritten with zero");
             File.WriteAllText(timerPassedTimeSaveFilePath, 0f.ToString(NumberFormatInfo.InvariantInfo));
             LastTimerTimePassed = TimeSpan.Zero;
             return;
         }
 
         LastTimerTimePassed = TimeSpan.FromSeconds(value);
-        LogInfo($@"Loaded last timer passed time: {LastTimerTimePassed:hh\:mm\:ss}");
+        Log.Info($@"Loaded last timer passed time: {LastTimerTimePassed:hh\:mm\:ss}");
     }
 
     public static void SavePassedTimerTimeToFile()
@@ -101,7 +101,7 @@ public static class ResetTerrainTimer
         System.Diagnostics.Debug.Assert(Timer is not null);
         if (Timer is null)
         {
-            LogWarning("Can not save timer passed time before its creation");
+            Log.Warning("Can not save timer passed time before its creation");
             return;
         }
         
@@ -113,7 +113,7 @@ public static class ResetTerrainTimer
         File.WriteAllText(timerPassedTimeSaveFilePath,
             timerPassedTimeOnSeconds.ToString(NumberFormatInfo.InvariantInfo));
 
-        LogInfo($@"Saved timer passed time to file: {LastTimerTimePassed:hh\:mm\:ss}");
+        Log.Info($@"Saved timer passed time to file: {LastTimerTimePassed:hh\:mm\:ss}");
     }
 
     // private enum ResetProcessState
