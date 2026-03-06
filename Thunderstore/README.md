@@ -1,4 +1,4 @@
-<img src="https://gcdn.thunderstore.io/live/repository/icons/Frogger-GroundReset-2.7.1.png.128x128_q95.png" align="right" alt="Project Logo" style="border-radius: 10px;">
+<img src="https://github.com/JFHeim/GroundReset/blob/main/Thunderstore/icon.png?raw=true" align="right" alt="Project Logo" style="border-radius: 10px; height: 128px">
 
 # GroundReset
 
@@ -79,7 +79,6 @@ Arcane Ward</a><br>
 ### Credits
 
 <img alt="Discord Logo" src="https://freelogopng.com/images/all_img/1691730813discord-icon-png.png" width="16"> Discord — `justafrogger`<br>
-<img alt="GitHub Logo" src="https://github.githubassets.com/assets/pinned-octocat-093da3e6fa40.svg" width="16"/> <a href="https://github.com/JFHeim/GroundReset">Source Code</a><br>
 <img alt="Thunderstore Logo" src="https://gcdn.thunderstore.io/live/community/valheim/PNG_color_logo_only_1_transparent.png" width="14"/> <a href="https://valheim.thunderstore.io/package/Frogger/GroundReset/">Mod page</a><br>
 
 This mod was commissioned by
@@ -88,3 +87,5 @@ This mod was commissioned by
 Also, many thanks to
 <img alt="The gdragon avatar" src="https://cdn.discordapp.com/emojis/1196058163401736325.webp?size=96&quality=lossless" width="18"/>
 gdragon for the help with writing this text
+
+<ins>If something does not work for you, you have found any bugs, or have suggestions — DM me or open a github issue</ins>

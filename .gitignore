@@ -397,6 +397,8 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
-Thunderstore/GroundReset.dll
 /.idea
+
+Thunderstore/*.dll
 /Thunderstore/*.zip
+build/*.dll
