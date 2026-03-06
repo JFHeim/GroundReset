@@ -13,11 +13,11 @@ public static class WardMonoscriptExt
 
     public static float GetWardRadius(this WardMonoscript wrapper)
     {
-        return ModCompat.InvokeMethod<float>(ClassType(), null, "GetWardRadius", [wrapper.targetScript]);
+        return ModCompat.InvokeMethod<float>(ClassType(), null, "GetWardRadius", [wrapper.TargetScript]);
     }
 
     public static bool GetDoorInteractOn(this WardMonoscript wrapper)
     {
-        return ModCompat.InvokeMethod<bool>(ClassType(), null, "GetDoorInteractOn", [wrapper.targetScript]);
+        return ModCompat.InvokeMethod<bool>(ClassType(), null, "GetDoorInteractOn", [wrapper.TargetScript]);
     }
 }

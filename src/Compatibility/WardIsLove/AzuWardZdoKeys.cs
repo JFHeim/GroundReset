@@ -1,9 +1,10 @@
 ﻿// ReSharper disable StringLiteralTypo
 // ReSharper disable IdentifierTypo
+// ReSharper disable InconsistentNaming
 
 namespace GroundReset.Compatibility.WardIsLove;
 
-public class AzuWardZdoKeys
+public static class AzuWardZdoKeys
 {
     public static readonly int wardRadius = "wardRadius".GetStableHashCode();
     public static readonly int accessMode = "accessMode".GetStableHashCode();

@@ -2,9 +2,9 @@
 
 public class WardMonoscript : ModCompat
 {
-    public object targetScript;
+    public readonly object TargetScript;
 
-    public WardMonoscript(object targetScript) { this.targetScript = targetScript; }
+    public WardMonoscript(object targetScript) => TargetScript = targetScript;
 
     public static Type ClassType() { return Type.GetType("WardIsLove.Util.WardMonoscript, WardIsLove"); }
 
@@ -21,9 +21,9 @@ public class WardMonoscript : ModCompat
 
     public ZNetView GetZNetView()
     {
-        if (targetScript == null) return null;
+        if (TargetScript == null) return null;
 
-        return GetField<ZNetView>(ClassType(), targetScript, "m_nview");
+        return GetField<ZNetView>(ClassType(), TargetScript, "m_nview");
     }
 
     public ZDO GetZDO()
