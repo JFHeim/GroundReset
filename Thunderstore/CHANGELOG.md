@@ -1,5 +1,6 @@
 | Version | Date       | Changes                                                                                                                  |
 |---------|------------|--------------------------------------------------------------------------------------------------------------------------|
+| 2.8.1   | 08.03.2026 | Readme fixes                                                                                     
 | 2.8.0   | 08.03.2026 | Moved away from JFUtils                                                                                     
 | 2.7.2   | 08.12.2025 | Fixed old bug in config reload logic                                                                                     
 | 2.7.1   | N/A        | Removed discord webhook to pass thunderstore moderation                                                                  
