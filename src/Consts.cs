@@ -7,7 +7,7 @@ public static class Consts
     public const string
         ModName = "GroundReset",
         ModAuthor = "Frogger",
-        ModVersion = "2.7.2",
+        ModVersion = "2.8.0",
         ModGuid = $"com.{ModAuthor}.{ModName}";
 
     public const string TimerId = "JF_GroundReset";

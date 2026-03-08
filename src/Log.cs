@@ -1,19 +1,18 @@
 using System.Reflection;
 using BepInEx;
 using BepInEx.Logging;
-using GroundReset.Config;
 
 namespace GroundReset;
 
 public static class Log
 {
-    private static ManualLogSource? Logger;
-    private static BaseUnityPlugin Plugin = null!;
+    private static ManualLogSource? _logger;
+    private static BaseUnityPlugin _plugin = null!;
 
     public static void InitializeConfiguration(BaseUnityPlugin plugin)
     {
-        Plugin = plugin;
-        Logger = GetProtectedLogger(Plugin);
+        _plugin = plugin;
+        _logger = GetProtectedLogger(_plugin);
     }
 
     private static ManualLogSource GetProtectedLogger(object instance)
@@ -21,9 +20,7 @@ public static class Log
         if (instance == null) throw new ArgumentNullException(nameof(instance));
         var type = instance.GetType();
 
-        var prop = type.GetProperty("Logger",
-            BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public
-        );
+        var prop = type.GetProperty("Logger", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 
         if (prop == null) throw new MissingMemberException(type.FullName, "Logger");
 
@@ -36,45 +33,45 @@ public static class Log
 
     public static void Info(string message, bool insertTimestamp = false)
     {
-        if(Logger is null) return;
+        if(_logger is null) return;
 
         if (insertTimestamp) message = DateTime.Now.ToString("G") + message;
-        Logger.LogInfo(message);
+        _logger.LogInfo(message);
     }
 
     public static void Error(Exception ex, string message = "", bool insertTimestamp = false)
     {
-        if(Logger is null) return;
+        if(_logger is null) return;
 
         if (insertTimestamp) message = DateTime.Now.ToString("G") + message;
         if (string.IsNullOrEmpty(message)) message += Environment.NewLine;
 
-        Logger.LogError(message + ex);
+        _logger.LogError(message + ex);
     }
 
     public static void Error(string message, bool insertTimestamp = false)
     {
-        if(Logger is null) return;
+        if(_logger is null) return;
 
         if (insertTimestamp) message = DateTime.Now.ToString("G") + message;
-        Logger.LogError(message);
+        _logger.LogError(message);
     }
 
     public static void Warning(Exception ex, string message, bool insertTimestamp = false)
     {
-        if(Logger is null) return;
+        if(_logger is null) return;
 
         if (insertTimestamp) message = DateTime.Now.ToString("G") + message;
         if (string.IsNullOrEmpty(message)) message += Environment.NewLine;
 
-        Logger.LogWarning(message + ex);
+        _logger.LogWarning(message + ex);
     }
 
     public static void Warning(string message, bool insertTimestamp = false)
     {
-        if(Logger is null) return;
+        if(_logger is null) return;
 
         if (insertTimestamp) message = DateTime.Now.ToString("G") + message;
-        Logger.LogWarning(message);
+        _logger.LogWarning(message);
     }
 }

@@ -1,5 +1,6 @@
 | Version | Date       | Changes                                                                                                                  |
 |---------|------------|--------------------------------------------------------------------------------------------------------------------------|
+| 2.8.0   | 08.03.2026 | Moved away from JFUtils                                                                                     
 | 2.7.2   | 08.12.2025 | Fixed old bug in config reload logic                                                                                     
 | 2.7.1   | N/A        | Removed discord webhook to pass thunderstore moderation                                                                  
 | 2.7.0   | N/A        | ArcaneWard support <br>Works with Valheim 1.0.221.4<br> Better code parallelism<br> Doesn't kick players during reset    

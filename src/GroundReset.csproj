@@ -5,20 +5,17 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
-        
+
         <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
         <DebugType>embedded</DebugType>  <!-- So there are line numbers in error logs -->
-        
-        <AssemblyVersion>2.7.2</AssemblyVersion>
-        <FileVersion>2.7.2</FileVersion>
 
         <LibDir>$(MSBuildProjectDirectory)/Lib/</LibDir>
         <GameDir>$(VALHEIM_DIR)</GameDir>
-        <GameDir Condition="'$(GameDir)' == '' AND '$(OS)' == 'Windows_NT'">$(ProgramFiles(x86))\Steam\steamapps\common\Valheim dedicated server\</GameDir>
+        <GameDir Condition="'$(GameDir)' == '' AND '$(OS)' == 'Windows_NT'">C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server\</GameDir>
         <GameDir Condition="'$(GameDir)' == '' AND '$(OS)' != 'Windows_NT'">$(HOME)/.local/share/Steam/steamapps/common/Valheim dedicated server/</GameDir>
         <ManagedAssemblesDir>$(GameDir)valheim_server_Data/Managed/</ManagedAssemblesDir>
         <BepInExDir>$(GameDir)BepInEx/</BepInExDir>
-        <BepInExLibsDir>$(GameDir)BepInEx/core/</BepInExLibsDir>
+        <BepInExLibsDir>$(BepInExDir)core/</BepInExLibsDir>
     </PropertyGroup>
 
     <ItemGroup>
@@ -59,7 +56,7 @@
         </None>
     </ItemGroup>
 
-    <Target Name="ValidateGameDir" BeforeTargets="BeforeBuild, ResolveAssemblyReferences">
+    <Target Name="ValidateGameDir" BeforeTargets="PrepareForBuild">
         <Error
             Condition="!Exists('$(GameDir)')"
             Text="Valheim game directory not found at '$(GameDir)'. Please set the VALHEIM_DIR environment variable to the correct Valheim installation path. On Windows: set VALHEIM_DIR=C:\Program Files (x86)\Steam\steamapps\common\Valheim\ | On Linux: export VALHEIM_DIR=~/.local/share/Steam/steamapps/common/Valheim/" />

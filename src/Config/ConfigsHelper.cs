@@ -7,63 +7,64 @@ namespace GroundReset.Config;
 
 public partial class ConfigsContainer
 {
-    public static ConfigsContainer Instance
-    {
-        get
-        {
-            System.Diagnostics.Debug.Assert(IsInitialized == true);
-            return field;
-        }
-        private set;
+    private static ConfigsContainer Instance {
+        get => _isInitialized ? field : throw new NullReferenceException("ConfigsContainer is not yet initialized");
+        set;
     } = null!;
-    private static bool IsInitialized = false;
-    private static DateTime LastConfigUpdateTime = DateTime.MinValue;
-    private static BaseUnityPlugin Plugin = null!;
+    private static bool _isInitialized = false;
+    private static BaseUnityPlugin _plugin = null!;
     private static Action? OnConfigurationChanged;
-    private static DateTime LastConfigChange = DateTime.MinValue;
+    private static DateTime _lastConfigChange = DateTime.MinValue;
+    private static readonly HashSet<string> _configFilesToWatch = [];
 
     public static void InitializeConfiguration(BaseUnityPlugin plugin)
     {
-        Plugin = plugin;
+        if (_isInitialized)
+        {
+            Log.Error("ConfigsContainer is already initialized");
+            return;
+        }
+
+        _plugin = plugin;
         plugin.Config.SaveOnConfigSet = false;
-        SetupWatcher();
-        plugin.Config.ConfigReloaded += (_, _) => UpdateConfiguration();
         Instance = new ConfigsContainer();
+        _configFilesToWatch.Add($"{_plugin.Info.Metadata.GUID}.cfg");
+        SetupWatcher();
         plugin.Config.SaveOnConfigSet = true;
+        plugin.Config.ConfigReloaded += (_, _) => UpdateConfiguration();
         plugin.Config.Save();
 
         OnConfigurationChanged += () =>
         {
             Log.Info("Configuration Received");
-
-            if(DateTime.Now - LastConfigUpdateTime < TimeSpan.FromSeconds(1)) return;
-            LastConfigUpdateTime = DateTime.Now;
-
             Instance.ApplyConfiguration();
-
             Log.Info("Configuration applied");
         };
 
-        IsInitialized = true;
+        _isInitialized = true;
     }
 
     private static void SetupWatcher()
     {
-        FileSystemWatcher fileSystemWatcher = new(Paths.ConfigPath, Plugin.Info.Metadata.GUID);
-        fileSystemWatcher.Changed += ConfigChanged;
-        fileSystemWatcher.IncludeSubdirectories = true;
-        fileSystemWatcher.SynchronizingObject = ThreadingHelper.SynchronizingObject;
-        fileSystemWatcher.EnableRaisingEvents = true;
+        foreach (var fileName in _configFilesToWatch.Where(x=> !string.IsNullOrEmpty(x)))
+        {
+            FileSystemWatcher fileSystemWatcher = new(Paths.ConfigPath, fileName);
+            fileSystemWatcher.Changed += ConfigChanged;
+            fileSystemWatcher.Created += ConfigChanged;
+            fileSystemWatcher.IncludeSubdirectories = true;
+            fileSystemWatcher.SynchronizingObject = ThreadingHelper.SynchronizingObject;
+            fileSystemWatcher.EnableRaisingEvents = true;
+        }
     }
 
     private static void ConfigChanged(object sender, FileSystemEventArgs e)
     {
-        if ((DateTime.Now - LastConfigChange).TotalSeconds <= 2) return;
-        LastConfigChange = DateTime.Now;
+        if ((DateTime.Now - _lastConfigChange).TotalSeconds <= 2) return;
+        _lastConfigChange = DateTime.Now;
 
         try
         {
-            Plugin.Config.Reload();
+            _plugin.Config.Reload();
         }
         catch
         {
@@ -73,23 +74,19 @@ public partial class ConfigsContainer
 
     private static void UpdateConfiguration()
     {
-        try
-        {
-            OnConfigurationChanged?.Invoke();
-        }
-        catch (Exception e)
-        {
-            Log.Error($"Configuration error: {e.Message}", false);
-        }
+        try { OnConfigurationChanged?.Invoke(); }
+        catch (Exception e) { Log.Error(e, "Configuration error", false); }
     }
 
-
+    // ReSharper disable once InconsistentNaming
     public static ConfigEntry<T> config<T>(string group, string name, T value, ConfigDescription description)
     {
-        var configEntry = Plugin.Config.Bind(group, name, value, description);
+        var configEntry = _plugin.Config.Bind(group, name, value, description);
+
         return configEntry;
     }
 
+    // ReSharper disable once InconsistentNaming
     public static ConfigEntry<T> config<T>(string group, string name, T value, string description) =>
         config(group, name, value, new ConfigDescription(description));
 }

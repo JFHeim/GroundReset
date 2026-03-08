@@ -29,7 +29,7 @@ public static class InitWardsSettings
             foreach (var privateArea in foundWards) AddWard(privateArea.name);
         }
         
-        Log.Info($"Found {Reseter.wardsSettingsList.Count} wards: {string.Join(",", Reseter.wardsSettingsList.Select(x=>x.prefabName).ToArray())}");
+        Log.Info($"Found {Reseter.wardsSettingsList.Count} wards: {string.Join(",", Reseter.wardsSettingsList.Select(x=>x.PrefabName).ToArray())}");
     }
 
     private static void AddWard(string name)
@@ -38,7 +38,7 @@ public static class InitWardsSettings
         if (!prefab) return;
 
         var areaComponent = prefab.GetComponent<PrivateArea>();
-        if (Reseter.wardsSettingsList.Any(x => x.prefabName == name)) return;
+        if (Reseter.wardsSettingsList.Any(x => x.PrefabName == name)) return;
         Reseter.wardsSettingsList.Add(new WardSettings(name, areaComponent.m_radius));
     }
 

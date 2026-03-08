@@ -1,12 +1,20 @@
-﻿using BepInEx.Bootstrap;
+﻿using System.Reflection;
+using BepInEx.Bootstrap;
 
 namespace GroundReset.Compatibility.kgMarketplace;
 
-public class MarketplaceTerritorySystem
+public static class MarketplaceTerritorySystem
 {
-    private const string GUID = "MarketplaceAndServerNPCs";
+    private const string MarketModGuid = "MarketplaceAndServerNPCs";
 
-    public static bool IsLoaded() => Chainloader.PluginInfos.ContainsKey(GUID);
+    private static readonly Lazy<MethodInfo?> GetCurrentTerritoryMethod = new(() =>
+    {
+        var territoryType = AccessTools.TypeByName("Marketplace.Modules.TerritorySystem.TerritorySystem_DataTypes+Territory");
+        if (territoryType == null) return null;
+        return AccessTools.Method(territoryType, "GetCurrentTerritory");
+    });
+
+    public static bool IsLoaded() => Chainloader.PluginInfos.ContainsKey(MarketModGuid);
 
     public static bool PointInTerritory(Vector3 pos)
     {
@@ -17,13 +25,7 @@ public class MarketplaceTerritorySystem
     
     private static bool? PointInTerritoryApi(Vector3 pos)
     {
-        var territoryType = AccessTools.TypeByName("Marketplace.Modules.TerritorySystem.TerritorySystem_DataTypes.Territory");
-        if (territoryType == null) return null;
-
-        var getCurrentTerritoryMethod = AccessTools.Method(territoryType, "GetCurrentTerritory");
-        if (getCurrentTerritoryMethod == null) return null;
-
-        var territory = getCurrentTerritoryMethod.Invoke(null, [pos]);
+        var territory = GetCurrentTerritoryMethod.Value?.Invoke(null, [pos]);
         return territory != null;
     }
 }

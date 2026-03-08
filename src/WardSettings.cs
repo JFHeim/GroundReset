@@ -1,21 +1,15 @@
 ﻿namespace GroundReset;
 
-public struct WardSettings
+public readonly struct WardSettings(string prefabName, float radius)
 {
-    public string prefabName;
-    public float radius;
-    public bool dynamicRadius = false;
-    public Func<ZDO, float> getDynamicRadius;
-
-    public WardSettings(string prefabName, float radius)
-    {
-        this.prefabName = prefabName;
-        this.radius = radius;
-    }
+    public readonly string PrefabName = prefabName;
+    public readonly float Radius = radius;
+    public readonly bool DynamicRadius = false;
+    public readonly Func<ZDO, float>? GetDynamicRadius = null;
 
     public WardSettings(string prefabName, Func<ZDO, float> getDynamicRadius) : this(prefabName, 0)
     {
-        dynamicRadius = true;
-        this.getDynamicRadius = getDynamicRadius;
+        DynamicRadius = true;
+        GetDynamicRadius = getDynamicRadius;
     }
 }

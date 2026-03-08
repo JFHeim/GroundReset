@@ -34,7 +34,7 @@ public static class Reseter
         for (var i = 0; i < wardsSettingsList.Count; i++)
         {
             var wardsSettings = wardsSettingsList[i];
-            var zdos = await ZDOMan.instance.GetWorldObjectsAsync(wardsSettings.prefabName);
+            var zdos = await ZDOMan.instance.GetWorldObjectsAsync(wardsSettings.PrefabName);
             wards = wards.Concat(zdos).ToList();
         }
 
@@ -59,12 +59,12 @@ public static class Reseter
     
     public static bool IsInWard(Vector3 pos, float checkRadius = 0) => wards.Exists(searchWard =>
     {
-        var wardSettings = wardsSettingsList.Find(s => s.prefabName.GetStableHashCode() == searchWard.GetPrefab());
+        var wardSettings = wardsSettingsList.Find(s => s.PrefabName.GetStableHashCode() == searchWard.GetPrefab());
         var isEnabled = searchWard.GetBool(ZDOVars.s_enabled, true);
         if (!isEnabled) return false; // not enabled, skip range check
-        var wardRadius = wardSettings.dynamicRadius
-            ? wardSettings.getDynamicRadius(searchWard)
-            : wardSettings.radius;
+        var wardRadius = wardSettings.DynamicRadius
+            ? wardSettings.GetDynamicRadius!.Invoke(searchWard) // DynamicRadius is a guaranty
+            : wardSettings.Radius;
         var inRange = Utils.DistanceXZ(pos, searchWard.GetPosition()) <= wardRadius + checkRadius;
         return inRange;
     }) || MarketplaceTerritorySystem.PointInTerritory(pos);
